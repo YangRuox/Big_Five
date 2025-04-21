@@ -55,30 +55,11 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 7,
+   "execution_count": null,
    "id": "31459a9c-1702-4634-9ff4-a66a0d2c67fa",
    "metadata": {},
-   "outputs": [
-    {
-     "name": "stdout",
-     "output_type": "stream",
-     "text": [
-      "Code                     0\n",
-      "Job                      0\n",
-      "N                        0\n",
-      "Neuroticism (M)          0\n",
-      "Extraversion (M)         0\n",
-      "Openness (M)             0\n",
-      "Agreeableness (M)        0\n",
-      "Conscientiousness (M)    0\n",
-      "dtype: int64\n"
-     ]
-    }
-   ],
-   "source": [
-    "null_check = big5_df.isnull().sum()\n",
-    "print(null_check)\n"
-   ]
+   "outputs": [],
+   "source": []
   },
   {
    "cell_type": "code",
@@ -1065,6 +1046,14 @@
    "cell_type": "code",
    "execution_count": null,
    "id": "c55c99be",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "95c29750-af33-432e-bd4d-32a2ba61b8fb",
    "metadata": {},
    "outputs": [],
    "source": []
