@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics.pairwise import cosine_similarity
 from joblib import load
 import streamlit as st
-
+import joblib
 # %%
 
    # 读取Excel文件
@@ -222,25 +222,11 @@ def recommend_jobs(user_big5_scores, model, similarity_matrix, top_k=10):
         return top_jobs
 
 # %%
-# 示例人格分数（原始 Big Five T 分数）
-user_input = [51.46,	51.17,	46.09,	52.15,	49.41]
-
-recommendations = recommend_jobs(user_input, model, similarity_matrix, top_k=10)
-
-for i, (code, job, score) in enumerate(recommendations):
-    print(f"{i+1}. {code} - {job} (score: {score:.2f})")
-
-# %%
-import torch
-
 # 假设你的模型是 model
 torch.save(model.state_dict(), "your_model.pth")
 
 
 # %%
-import joblib
-from sklearn.preprocessing import StandardScaler
-
 # 假设你已经对特征使用了 scaler
 scaler = StandardScaler()
 scaler.fit(X_train)  # 这里 X_train 是你训练数据的特征
@@ -248,8 +234,6 @@ joblib.dump(scaler, "your_scaler.pkl")
 
 
 # %%
-import numpy as np
-
 # 假设 job_names 和 job_codes 是你拥有的职业名称和代码列表
 job_names = big5_df['Job'].tolist() # 你的职业名称列表
 job_codes = big5_df['Code'].tolist() # 你的职业代码列表
@@ -291,17 +275,32 @@ class JobRecommenderMLP(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-# 加载训练好的模型和数据
-model = JobRecommenderMLP(input_dim=5, hidden_dim=128, output_dim=263)  # 调整为你的模型结构
-model.load_state_dict(torch.load("your_model.pth", map_location=torch.device("cpu")))
-model.eval()  # 切换到评估模式
+# 1. 缓存模型加载
+@st.cache_resource
+def load_model():
+    model = JobRecommenderMLP(input_dim=5, hidden_dim=128, output_dim=263)
+    model.load_state_dict(torch.load("your_model.pth", map_location=torch.device("cpu")))
+    model.eval()
+    return model
 
-# 加载其他资源
-scaler = load("your_scaler.pkl")  # 你训练模型时使用的 scaler
-job_names = np.load("job_names.npy")  # 263个职业名称
-job_codes = np.load("job_codes.npy")  # 对应职业代码
-scaled_features = np.load("scaled_features.npy")  # 原始职业特征（用于相似度）
-similarity_matrix = np.load("similarity_matrix.npy")
+# 2. 缓存 scaler 加载
+@st.cache_resource
+def load_scaler():
+    return joblib.load("your_scaler.pkl")
+
+# 3. 缓存其他资源
+@st.cache_data
+def load_job_resources():
+    job_names = np.load("job_names.npy")
+    job_codes = np.load("job_codes.npy")
+    scaled_features = np.load("scaled_features.npy")
+    similarity_matrix = np.load("similarity_matrix.npy")
+    return job_names, job_codes, scaled_features, similarity_matrix
+   
+model = load_model()
+scaler = load_scaler()
+job_names, job_codes, scaled_features, similarity_matrix = load_job_resources()
+
 
 # 44道题 + 每题所属维度 + 正反向
 items = [
@@ -368,15 +367,13 @@ with st.form("bfi_form"):
     for i, (q, trait, reverse) in enumerate(items):
         key = f"q{i}"  # session_state 中的 key
 
-        # 如果该题没有值，默认设为 3 分（中性）
-        if key not in st.session_state:
-            st.session_state[key] = 3
         
-        st.session_state[key] = st.slider(
+        st.slider(
             f"{i+1}. {q}",
-            min_value=1, max_value=5, value=st.session_state[key],
-            key=key
-        )
+            min_value=1, max_value=5, 
+            value=st.session_state.get(key, 3), 
+            key=key)
+        
 
     # 提交按钮放在 form 内部
     submitted = st.form_submit_button("🎯 Submit and Recommend Careers")
