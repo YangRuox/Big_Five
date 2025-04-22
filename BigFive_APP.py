@@ -10,6 +10,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
+from sklearn.metrics.pairwise import cosine_similarity
+from joblib import load
+import streamlit as st
 
 # %%
 
@@ -265,7 +268,6 @@ np.save("scaled_features.npy", scaled_features)
 
 
 # %%
-from sklearn.metrics.pairwise import cosine_similarity
 
 
 # 保存相似度矩阵
@@ -273,11 +275,7 @@ np.save("similarity_matrix.npy", similarity_matrix)
 
 
 # %%
-import torch
-import torch.nn as nn
-import numpy as np
-from joblib import load
-import streamlit as st
+
 
 
 # 定义你的模型架构
