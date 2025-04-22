@@ -409,7 +409,7 @@ if submitted:
         top_indices = np.argsort(scores)[-10:][::-1]
         st.subheader("🧠 Recommended Careers Top-10")
         for i in top_indices:
-            st.write(f"{job_codes[i]} - {job_names[i]}  (Similarity Score: {scores[i]:.3f})")
+            st.write(f"NO.{i+1} - {job_names[i]}")
 
 # %%
 
