@@ -1,9 +1,9 @@
 streamlit
 pandas
 numpy
-torch
 matplotlib
 scikit-learn
 joblib
 openpyxl
-
+torch==2.0.1+cpu
+-f https://download.pytorch.org/whl/torch_stable.html

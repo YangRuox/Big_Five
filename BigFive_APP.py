@@ -371,14 +371,14 @@ items = [
 # 显示表单
 st.title("🔍 Big Five Personality Test + Career Recommender")
 
-st.markdown("请根据自己的真实感受选择下列描述的适用程度：**1（非常不同意）到 5（非常同意）**")
+st.markdown("Please rate the following statements based on your true feelings: **1 (Strongly Disagree) to 5 (Strongly Agree)**")
 
 response_dict = {}
 for i, (q, _, _) in enumerate(items):
     response = st.slider(f"{i+1}. {q}", 1, 5, 3)
     response_dict[i] = response
 
-if st.button("🎯 提交并推荐职业"):
+if st.button("🎯 Submit and Recommend Careers"):
     # 分类问题 -> 计算每个维度得分
     trait_scores = {"Extraversion": [], "Openness": [], "Neuroticism": [], "Agreeableness": [], "Conscientiousness": []}
     for i, (q, trait, reverse) in enumerate(items):
@@ -395,9 +395,9 @@ if st.button("🎯 提交并推荐职业"):
         scores = similarity_matrix @ logits
 
         top_indices = np.argsort(scores)[-10:][::-1]
-        st.subheader("🧠 推荐职业 Top-10")
+        st.subheader("🧠 Recommended Careers Top-10")
         for i in top_indices:
-            st.write(f"{job_codes[i]} - {job_names[i]}  （相似度得分：{scores[i]:.3f}）")
+            st.write(f"{job_codes[i]} - {job_names[i]}  (Similarity Score: {scores[i]:.3f})")
 
 
 # %%
