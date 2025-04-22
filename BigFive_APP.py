@@ -374,21 +374,44 @@ st.title("🔍 Big Five Personality Test + Career Recommender")
 st.markdown("Please rate the following statements based on your true feelings: **1 (Strongly Disagree) to 5 (Strongly Agree)**")
 
 response_dict = {}
-for i, (q, _, _) in enumerate(items):
-    response = st.slider(f"{i+1}. {q}", 1, 5, 3)
-    response_dict[i] = response
+# 用 st.form 包裹所有问题
+with st.form("bfi_form"):
+    st.subheader("👇 Please fill in your questionnaire answers")
+    
+    for i, (q, trait, reverse) in enumerate(personality_questions):
+        key = f"q{i}"  # session_state 中的 key
 
-if st.button("🎯 Submit and Recommend Careers"):
-    # 分类问题 -> 计算每个维度得分
+        # 如果该题没有值，默认设为 3 分（中性）
+        if key not in st.session_state:
+            st.session_state[key] = 3
+        
+        st.session_state[key] = st.slider(
+            f"{i+1}. {q}",
+            min_value=1, max_value=5, value=st.session_state[key],
+            key=key
+        )
+
+    # 提交按钮放在 form 内部
+    submitted = st.form_submit_button("🎯 Submit and Recommend Careers")
+
+
+if submitted:
+    # 收集所有 slider 的值
     trait_scores = {"Extraversion": [], "Openness": [], "Neuroticism": [], "Agreeableness": [], "Conscientiousness": []}
-    for i, (q, trait, reverse) in enumerate(items):
-        score = 6 - response_dict[i] if reverse else response_dict[i]
+    
+    for i, (_, trait, is_reverse) in enumerate(personality_questions):
+        score = st.session_state[f"q{i}"]
+        if is_reverse:
+            score = 6 - score
         trait_scores[trait].append(score)
     
-    big5_vector = [np.mean(trait_scores[trait]) for trait in ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]]
+    # 每个维度取平均
+    final_scores = []
+    for trait in ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]:
+        final_scores.append(np.mean(trait_scores[trait]))
 
     # 标准化 + 模型预测
-    scaled_input = scaler.transform([big5_vector])
+    scaled_input = scaler.transform([final_scores])
     with torch.no_grad():
         input_tensor = torch.tensor(scaled_input, dtype=torch.float32)
         logits = model(input_tensor).numpy().flatten()
