@@ -302,12 +302,20 @@ scaler = load_scaler()
 job_names, job_codes, scaled_features, similarity_matrix = load_job_resources()
 
 
+mean_norms = pd.read_csv('meanNorms.tsv', sep='\t')
+sd_norms = pd.read_csv('sdNorms.tsv', sep='\t')
+questions = pd.read_csv('questions.tsv', sep='\t')
+weights = pd.read_csv('weightsB5.tsv', sep='\t')
+
 # 性别选择
 gender = st.selectbox("Select your gender:", ["Female", "Male"])
 
 # 年龄输入
-age = st.number_input("Enter your age:", min_value=0, max_value=120, value=25)
-
+age = st.number_input("Enter your age:", min_value=18, max_value=70, value=25)
+if age < 18 or age > 70:
+    st.warning("Sorry, your age does not meet the requirements.")
+    st.stop()
+   
 # 分组
 if gender == "Female":
     normgroup = 1 if age < 35 else 2
@@ -315,57 +323,8 @@ else:
     normgroup = 3 if age < 35 else 4
 
 
-# 44道题 + 每题所属维度 + 正反向
-items = [
-    # (题目, 维度名, 是否反向)
-    ("I am the life of the party.", "Extraversion", False),
-    ("I don't talk a lot.", "Extraversion", True),
-    ("I feel comfortable around people.", "Extraversion", False),
-    ("I keep in the background.", "Extraversion", True),
-    ("I start conversations.", "Extraversion", False),
-    ("I have little to say.", "Extraversion", True),
-    ("I talk to a lot of different people at parties.", "Extraversion", False),
-    ("I don't like to draw attention to myself.", "Extraversion", True),
-    ("I am quiet around strangers.", "Extraversion", True),
-    
-    ("I enjoy trying new things.", "Openness", False),
-    ("I have a rich vocabulary.", "Openness", False),
-    ("I have a vivid imagination.", "Openness", False),
-    ("I am quick to understand things.", "Openness", False),
-    ("I spend time reflecting on things.", "Openness", False),
-    ("I am not interested in abstract ideas.", "Openness", True),
-    ("I do not like art.", "Openness", True),
-    ("I have difficulty understanding abstract ideas.", "Openness", True),
-    ("I have a lot of artistic interests.", "Openness", False),
-    
-    ("I am easily disturbed.", "Neuroticism", False),
-    ("I get upset easily.", "Neuroticism", False),
-    ("I change my mood a lot.", "Neuroticism", False),
-    ("I get nervous easily.", "Neuroticism", False),
-    ("I worry about things.", "Neuroticism", False),
-    ("I often feel blue.", "Neuroticism", False),
-    ("I am relaxed most of the time.", "Neuroticism", True),
-    ("I rarely feel depressed.", "Neuroticism", True),
-    ("I am easily embarrassed.", "Neuroticism", False),
-    
-    ("I feel little concern for others.", "Agreeableness", True),
-    ("I am not interested in other people's problems.", "Agreeableness", True),
-    ("I insult people.", "Agreeableness", True),
-    ("I sympathize with others' feelings.", "Agreeableness", False),
-    ("I take time out for others.", "Agreeableness", False),
-    ("I am not really interested in others.", "Agreeableness", True),
-    ("I feel others' emotions.", "Agreeableness", False),
-    ("I make people feel at ease.", "Agreeableness", False),
-    
-    ("I am often preoccupied with details.", "Conscientiousness", False),
-    ("I follow a schedule.", "Conscientiousness", False),
-    ("I am exacting in my work.", "Conscientiousness", False),
-    ("I am always prepared.", "Conscientiousness", False),
-    ("I leave my belongings around.", "Conscientiousness", True),
-    ("I pay attention to details.", "Conscientiousness", False),
-    ("I make plans and stick to them.", "Conscientiousness", False),
-    ("I get chores done right away.", "Conscientiousness", False),
-]
+# 74道题 
+items = list(questions['en'])
 
 # 显示表单
 st.title("🔍 Big Five Personality Test + Career Recommender")
@@ -373,19 +332,23 @@ st.title("🔍 Big Five Personality Test + Career Recommender")
 st.markdown("Please rate the following statements based on your true feelings: **1 (Strongly Disagree) to 5 (Strongly Agree)**")
 
 response_dict = {}
-# 用 st.form 包裹所有问题
+
 with st.form("bfi_form"):
     st.subheader("👇 Please fill in your questionnaire answers")
-    
-    for i, (q, trait, reverse) in enumerate(items):
-        key = f"q{i}"  # session_state 中的 key
 
-        
-        st.slider(
-            f"{i+1}. {q}",
-            min_value=1, max_value=6, 
-            value=st.session_state.get(key, 3), 
-            key=key)
+    for i, q in enumerate(questions["en"]):
+        key = f"q{i}"
+        response_dict[key] = st.slider(
+            q,
+            min_value=1, max_value=6,
+            value=st.session_state.get(key, 3),
+            key=key
+        )
+    if all(v is not None for v in response_dict.values()):
+        submitted = st.form_submit_button("🎯 Submit and Recommend Careers")
+    else:
+        submitted = False
+        st.warning("Please answer all questions before submitting.")  # 提示用户回答所有问题
         
 
     # 提交按钮放在 form 内部
@@ -393,31 +356,41 @@ with st.form("bfi_form"):
 
 
 if submitted:
-    # 收集所有 slider 的值
-    trait_scores = {"Extraversion": [], "Openness": [], "Neuroticism": [], "Agreeableness": [], "Conscientiousness": []}
-    
-    for i, (_, trait, is_reverse) in enumerate(items):
-        score = st.session_state[f"q{i}"]
-        if is_reverse:
-            score = 6 - score
-        trait_scores[trait].append(score)
-    
-    # 每个维度取平均
-    final_scores = []
-    for trait in ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]:
-        final_scores.append(np.mean(trait_scores[trait]))
+    # Step 1: 获取 norm μ 和 σ
+    mu = mean_norms[mean_norms['group'] == normgroup].iloc[0, 1:].values  # 跳过 group 列
+    sigma = sd_norms[sd_norms['group'] == normgroup].iloc[0, 1:].values
 
-    # 标准化 + 模型预测
-    scaled_input = scaler.transform([final_scores])
+    # Step 2: 用户回答转 numpy
+    responses = np.array([response_dict[f"q{i}"] for i in range(len(questions))])
+
+    # Step 3: 计算 Z 
+    Z = (responses - mu) / sigma
+
+    # Step 4: 加权求 Big Five 得分（weightsB5 为 74x5，T 为 74x1，输出为 5x1）
+    big5_scores = np.dot(Z, weights.values)  # shape: (5,)
+    T_scores = 10 * big5_scores + 50 
+
+    # Step 5: 标准化（用你的 scaler）
+    scaled_input = scaler.transform([T_scores])
+
+    # Step 6: 模型预测
     with torch.no_grad():
         input_tensor = torch.tensor(scaled_input, dtype=torch.float32)
         logits = model(input_tensor).numpy().flatten()
         scores = similarity_matrix @ logits
-
         top_indices = np.argsort(scores)[-10:][::-1]
+        bottom_indices = np.argsort(scores)[:10]
+
         st.subheader("🧠 Recommended Careers Top-10")
-        for i in top_indices:
-            st.write(f"NO.{i+1} - {job_names[i]}")  # 使用 NO.1, NO.2 等输出职业
+        for rank, idx in enumerate(top_indices, 1):
+            st.write(f"NO.{rank} - {job_names[idx]}")
+
+        st.subheader("😬 Least Recommended Careers Bottom-10")
+        for rank, idx in enumerate(bottom_indices, 1):
+            st.write(f"NO.{rank} - {job_names[idx]}")
+
+
+   
 
 # %%
 
