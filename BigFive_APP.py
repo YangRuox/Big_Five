@@ -310,7 +310,7 @@ scaler = load_scaler()
 job_names, job_codes, scaled_features, similarity_matrix = load_job_resources()
 
 
-@st.cache
+@st.cache_data
 def load_data():
     mean_norms = pd.read_csv('meanNorms.tsv', sep='\t')
     sd_norms = pd.read_csv('sdNorms.tsv', sep='\t')
