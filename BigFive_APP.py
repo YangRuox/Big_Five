@@ -360,39 +360,33 @@ st.title("🔍 Big Five Personality Test + Career Recommender")
 st.markdown("Please rate the following statements based on your true feelings: **1 (Strongly Disagree) to 5 (Strongly Agree)**")
 
 response_dict = {}
-# 初始化 Session State
-for i, (q, trait, reverse) in enumerate(items):
-    question_key = f"question_{i}"
-    if question_key not in st.session_state:
-        st.session_state[question_key] = 3  # 设置默认值为 3
-
-# 使用 st.form 包裹所有问题
+# 用 st.form 包裹所有问题
 with st.form("bfi_form"):
     st.subheader("👇 Please fill in your questionnaire answers")
     
     for i, (q, trait, reverse) in enumerate(items):
-        question_key = f"question_{i}"
-        
-        value = st.slider(f"Question {i+1}: {q}",
-                          min_value=1, max_value=5,
-                          value=st.session_state[question_key],
-                          key=question_key)
-        
-        # 更新 session_state 中的值
-        st.session_state[question_key] = value
+        key = f"q{i}"  # session_state 中的 key
 
-    # 提交按钮
+        
+        st.slider(
+            f"{i+1}. {q}",
+            min_value=1, max_value=5, 
+            value=st.session_state.get(key, 3), 
+            key=key)
+        
+
+    # 提交按钮放在 form 内部
     submitted = st.form_submit_button("🎯 Submit and Recommend Careers")
 
-# 提交按钮点击后
+
 if submitted:
     # 收集所有 slider 的值
     trait_scores = {"Extraversion": [], "Openness": [], "Neuroticism": [], "Agreeableness": [], "Conscientiousness": []}
     
     for i, (_, trait, is_reverse) in enumerate(items):
-        score = st.session_state[f"question_{i}"]
+        score = st.session_state[f"q{i}"]
         if is_reverse:
-            score = 6 - score  # 如果是反向题目，进行转换
+            score = 6 - score
         trait_scores[trait].append(score)
     
     # 每个维度取平均
