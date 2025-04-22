@@ -221,6 +221,14 @@ def recommend_jobs(user_big5_scores, model, similarity_matrix, top_k=10):
 
         return top_jobs
 
+user_input = [51.46,	51.17,	46.09,	52.15,	49.41]
+
+recommendations = recommend_jobs(user_input, model, similarity_matrix, top_k=10)
+
+for i, (code, job, score) in enumerate(recommendations):
+    print(f"{i+1}. {code} - {job} (score: {score:.2f})")
+
+
 # %%
 # 假设你的模型是 model
 torch.save(model.state_dict(), "your_model.pth")
@@ -302,10 +310,15 @@ scaler = load_scaler()
 job_names, job_codes, scaled_features, similarity_matrix = load_job_resources()
 
 
-mean_norms = pd.read_csv('meanNorms.tsv', sep='\t')
-sd_norms = pd.read_csv('sdNorms.tsv', sep='\t')
-questions = pd.read_csv('questions.tsv', sep='\t')
-weights = pd.read_csv('weightsB5.tsv', sep='\t')
+@st.cache
+def load_data():
+    mean_norms = pd.read_csv('meanNorms.tsv', sep='\t')
+    sd_norms = pd.read_csv('sdNorms.tsv', sep='\t')
+    questions = pd.read_csv('questions.tsv', sep='\t')
+    weights = pd.read_csv('weightsB5.tsv', sep='\t')
+    return mean_norms, sd_norms, questions, weights
+
+mean_norms, sd_norms, questions, weights = load_data()
 
 # 性别选择
 gender = st.selectbox("Select your gender:", ["Female", "Male"])
@@ -351,9 +364,7 @@ with st.form("bfi_form"):
         st.warning("Please answer all questions before submitting.")  # 提示用户回答所有问题
         
 
-    # 提交按钮放在 form 内部
-    submitted = st.form_submit_button("🎯 Submit and Recommend Careers")
-
+    
 
 if submitted:
     # Step 1: 获取 norm μ 和 σ
