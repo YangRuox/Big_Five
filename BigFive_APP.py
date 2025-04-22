@@ -10,17 +10,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
-import torch
-from torch.utils.data import TensorDataset, DataLoader
-import torch.nn as nn
-import torch.optim as optim
-from sklearn.metrics import accuracy_score, f1_score
-from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
-import torch
-from torch.utils.data import TensorDataset, DataLoader
-import torch.nn as nn
-import torch.optim as optim
 
 # %%
 
