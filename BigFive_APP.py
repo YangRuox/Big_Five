@@ -360,26 +360,31 @@ st.title("🔍 Big Five Personality Test + Career Recommender")
 st.markdown("Please rate the following statements based on your true feelings: **1 (Strongly Disagree) to 5 (Strongly Agree)**")
 
 response_dict = {}
+# 初始化 Session State
+for i, (q, trait, reverse) in enumerate(items):
+    question_key = f"question_{i}"
+    if question_key not in st.session_state:
+        st.session_state[question_key] = 3  # 设置默认值为 3
+
 # 使用 st.form 包裹所有问题
 with st.form("bfi_form"):
     st.subheader("👇 Please fill in your questionnaire answers")
     
-    # 遍历所有问题，创建每个问题的滑动条
     for i, (q, trait, reverse) in enumerate(items):
         question_key = f"question_{i}"
         
-        # 如果 session_state 中没有值，初始化为 3（或你想要的其他默认值）
-        if question_key not in st.session_state:
-            st.session_state[question_key] = 1  # 默认值为 1
+        value = st.slider(f"Question {i+1}: {q}",
+                          min_value=1, max_value=5,
+                          value=st.session_state[question_key],
+                          key=question_key)
         
-        value = st.slider(f"{i+1}. {q}", min_value=1, max_value=5, value=st.session_state[question_key], key=question_key)
-        
-        # 将每个 slider 的值保存到 session_state 中
+        # 更新 session_state 中的值
         st.session_state[question_key] = value
 
     # 提交按钮
     submitted = st.form_submit_button("🎯 Submit and Recommend Careers")
 
+# 提交按钮点击后
 if submitted:
     # 收集所有 slider 的值
     trait_scores = {"Extraversion": [], "Openness": [], "Neuroticism": [], "Agreeableness": [], "Conscientiousness": []}
@@ -387,7 +392,7 @@ if submitted:
     for i, (_, trait, is_reverse) in enumerate(items):
         score = st.session_state[f"question_{i}"]
         if is_reverse:
-            score = 6 - score  # 如果需要反向评分
+            score = 6 - score  # 如果是反向题目，进行转换
         trait_scores[trait].append(score)
     
     # 每个维度取平均
@@ -405,7 +410,7 @@ if submitted:
         top_indices = np.argsort(scores)[-10:][::-1]
         st.subheader("🧠 Recommended Careers Top-10")
         for i in top_indices:
-            st.write(f"NO.{i+1} - {job_names[i]}")
+            st.write(f"NO.{i+1} - {job_names[i]}")  # 使用 NO.1, NO.2 等输出职业
 
 # %%
 
