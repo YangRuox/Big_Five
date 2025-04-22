@@ -203,6 +203,8 @@ plt.show()
 
 
 # %%
+job_codes = big5_df['Code'].tolist()
+
 from sklearn.metrics.pairwise import cosine_similarity
 similarity_matrix = cosine_similarity(scaled_features)
 # similarity_matrix.shape = (263, 263)
@@ -286,6 +288,8 @@ import torch
 import torch.nn as nn
 import numpy as np
 from joblib import load
+import streamlit as st
+
 
 # 定义你的模型架构
 class JobRecommenderMLP(nn.Module):
