@@ -302,6 +302,19 @@ scaler = load_scaler()
 job_names, job_codes, scaled_features, similarity_matrix = load_job_resources()
 
 
+# 性别选择
+gender = st.selectbox("Select your gender:", ["Female", "Male"])
+
+# 年龄输入
+age = st.number_input("Enter your age:", min_value=0, max_value=120, value=25)
+
+# 分组
+if gender == "Female":
+    normgroup = 1 if age < 35 else 2
+else:
+    normgroup = 3 if age < 35 else 4
+
+
 # 44道题 + 每题所属维度 + 正反向
 items = [
     # (题目, 维度名, 是否反向)
