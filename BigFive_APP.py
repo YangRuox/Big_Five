@@ -360,33 +360,38 @@ st.title("🔍 Big Five Personality Test + Career Recommender")
 st.markdown("Please rate the following statements based on your true feelings: **1 (Strongly Disagree) to 5 (Strongly Agree)**")
 
 response_dict = {}
-# 用 st.form 包裹所有问题
+# 使用 st.form 包裹所有问题
 with st.form("bfi_form"):
     st.subheader("👇 Please fill in your questionnaire answers")
     
-    for i, (q, trait, reverse) in enumerate(items):
-        key = f"q{i}"  # session_state 中的 key
+    # 遍历所有问题，创建每个问题的滑动条
+    for i in range(44):  # 假设你有44道题
+        q, trait, reverse = items[i]  # 每道题的数据
 
+        # 问题编号按顺序递增
+        question_key = f"question_{i}"
         
-        st.slider(
-            f"{i+1}. {q}",
-            min_value=1, max_value=5, 
-            value=st.session_state.get(key, 3), 
-            key=key)
+        # 如果 session_state 中没有值，初始化为 3（或你想要的其他默认值）
+        if question_key not in st.session_state:
+            st.session_state[question_key] = 3  # 默认值为 3
         
+        value = st.slider(f"{i+1}. {q}", min_value=1, max_value=5, value=st.session_state[question_key], key=question_key)
+        
+        # 将每个 slider 的值保存到 session_state 中
+        st.session_state[question_key] = value
 
-    # 提交按钮放在 form 内部
+    # 提交按钮
     submitted = st.form_submit_button("🎯 Submit and Recommend Careers")
-
 
 if submitted:
     # 收集所有 slider 的值
     trait_scores = {"Extraversion": [], "Openness": [], "Neuroticism": [], "Agreeableness": [], "Conscientiousness": []}
     
-    for i, (_, trait, is_reverse) in enumerate(items):
-        score = st.session_state[f"q{i}"]
+    for i in range(44):
+        q, trait, is_reverse = items[i]
+        score = st.session_state[f"question_{i}"]
         if is_reverse:
-            score = 6 - score
+            score = 6 - score  # 如果需要反向评分
         trait_scores[trait].append(score)
     
     # 每个维度取平均
@@ -405,7 +410,6 @@ if submitted:
         st.subheader("🧠 Recommended Careers Top-10")
         for i in top_indices:
             st.write(f"{job_codes[i]} - {job_names[i]}  (Similarity Score: {scores[i]:.3f})")
-
 
 # %%
 
