@@ -370,7 +370,7 @@ with st.form("bfi_form"):
         
         st.slider(
             f"{i+1}. {q}",
-            min_value=1, max_value=5, 
+            min_value=1, max_value=6, 
             value=st.session_state.get(key, 3), 
             key=key)
         
