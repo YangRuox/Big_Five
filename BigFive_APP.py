@@ -365,7 +365,7 @@ response_dict = {}
 with st.form("bfi_form"):
     st.subheader("👇 Please fill in your questionnaire answers")
     
-    for i, (q, trait, reverse) in enumerate(personality_questions):
+    for i, (q, trait, reverse) in enumerate(items):
         key = f"q{i}"  # session_state 中的 key
 
         # 如果该题没有值，默认设为 3 分（中性）
@@ -386,7 +386,7 @@ if submitted:
     # 收集所有 slider 的值
     trait_scores = {"Extraversion": [], "Openness": [], "Neuroticism": [], "Agreeableness": [], "Conscientiousness": []}
     
-    for i, (_, trait, is_reverse) in enumerate(personality_questions):
+    for i, (_, trait, is_reverse) in enumerate(items):
         score = st.session_state[f"q{i}"]
         if is_reverse:
             score = 6 - score
