@@ -113,7 +113,7 @@ text_dict = {
         "Veuillez répondre à toutes les questions avant de soumettre.",
         "Top-10 Carrières recommandées",
         "Bottom-10 Carrières les moins recommandées"
-    },
+    
     ],
     "es": [
         "🔍 Test de personalidad Big Five + Recomendación de carrera",
