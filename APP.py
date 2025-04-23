@@ -101,7 +101,8 @@ text_dict = {
         "👇 Please fill in your questionnaire answers",
         "Please answer all questions before submitting.",
         "Top-10 Recommended Careers",
-        "Bottom-10 Least Recommended Careers"
+        "Bottom-10 Least Recommended Careers",
+        "🎯 Submit and Recommend Careers"
     ],
     "fr": [
         "🔍 Test de personnalité Big Five + Recommandation de carrière",
@@ -112,8 +113,8 @@ text_dict = {
         "👇 Veuillez remplir vos réponses au questionnaire",
         "Veuillez répondre à toutes les questions avant de soumettre.",
         "Top-10 Carrières recommandées",
-        "Bottom-10 Carrières les moins recommandées"
-    
+        "Bottom-10 Carrières les moins recommandées",
+        "🎯 Soumettre et recommander des carrières"
     ],
     "es": [
         "🔍 Test de personalidad Big Five + Recomendación de carrera",
@@ -124,7 +125,8 @@ text_dict = {
         "👇 Por favor, complete sus respuestas al cuestionario",
         "Por favor, responda todas las preguntas antes de enviar.",
         "Top-10 Carreras recomendadas",
-        "Bottom-10 Carreras menos recomendadas"
+        "Bottom-10 Carreras menos recomendadas",
+        "🎯 Enviar y recomendar carreras"
     ],
     "ar": [
         "🔍 اختبار الشخصية Big Five + توصية المهن",
@@ -135,7 +137,8 @@ text_dict = {
         "👇 يرجى ملء إجاباتك على الاستبيان",
         "يرجى الإجابة على جميع الأسئلة قبل الإرسال.",
         "أفضل 10 وظائف موصى بها",
-        "أسوأ 10 وظائف غير موصى بها"
+        "أسوأ 10 وظائف غير موصى بها",
+        "🎯 إرسال وتوصية الوظائف"
     ],
     "ru": [
         "🔍 Тест личности Big Five + Рекомендатор профессий",
@@ -146,7 +149,8 @@ text_dict = {
         "👇 Пожалуйста, заполните свои ответы на вопросы",
         "Пожалуйста, ответьте на все вопросы перед отправкой.",
         "Топ-10 рекомендуемых профессий",
-        "Топ-10 наименее рекомендуемых профессий"
+        "Топ-10 наименее рекомендуемых профессий",
+        "🎯 Отправить и рекомендовать профессии"
     ],
     "zh": [
         "🔍 五大人格测试 + 职业推荐器",
@@ -155,12 +159,12 @@ text_dict = {
         "请输入您的年龄：",
         "抱歉，您的年龄不符合要求。",
         "👇 请填写您的问卷答案",
-        "请在提交前回答所有问题。"
+        "请在提交前回答所有问题。",
         "最推荐的10类职业",
-        "最不推荐的10类职业"
+        "最不推荐的10类职业",
+        "🎯 提交并推荐职业"
     ]
 }
-
 
 language_options = list(language_display.values())
 
@@ -206,7 +210,7 @@ with st.form("bfi_form"):
         )
 
     if all(v is not None for v in response_dict.values()):
-        submitted = st.form_submit_button("🎯 Submit and Recommend Careers")
+        submitted = st.form_submit_button("selected_text[9]")
     else:
         submitted = False
         st.warning(selected_text[6])  # 提示用户回答所有问题
