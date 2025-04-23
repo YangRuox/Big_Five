@@ -284,54 +284,28 @@ class JobRecommenderMLP(nn.Module):
         return self.model(x)
 
 
-# 1. 缓存数据加载
-@st.cache_data
-def load_data():
-    mean_norms = pd.read_csv('meanNorms.tsv', sep='\t')
-    sd_norms = pd.read_csv('sdNorms.tsv', sep='\t')
-    questions = pd.read_csv('questions.tsv', sep='\t')
-    weights = pd.read_csv('weightsB5.tsv', sep='\t')
-    return mean_norms, sd_norms, questions, weights
+mean_norms = pd.read_csv('meanNorms.tsv', sep='\t')
+sd_norms = pd.read_csv('sdNorms.tsv', sep='\t')
+questions = pd.read_csv('questions.tsv', sep='\t')
+weights = pd.read_csv('weightsB5.tsv', sep='\t')
 
-# 2. 从 session_state 获取或设置默认值
-if "age" not in st.session_state:
-    st.session_state.age = 25  # 默认年龄
-
-if "gender" not in st.session_state:
-    st.session_state.gender = "Female"  # 默认性别
-
-# 3. 性别选择与年龄输入
-gender = st.selectbox("Select your gender:", ["Female", "Male"], index=["Female", "Male"].index(st.session_state.gender))
+# 性别选择
+gender = st.selectbox("Select your gender:", ["Female", "Male"])
 
 # 年龄输入
-age = st.number_input("Enter your age:", min_value=18, max_value=70, value=st.session_state.age)
+age = st.number_input("Enter your age:", min_value=18, max_value=70, value=25)
 if age < 18 or age > 70:
     st.warning("Sorry, your age does not meet the requirements.")
-    st.stop()
-
-# 更新 session_state
-st.session_state.age = age
-st.session_state.gender = gender
-
-# 4. 分组
+   
+# 分组
 if gender == "Female":
     normgroup = 1 if age < 35 else 2
 else:
     normgroup = 3 if age < 35 else 4
 
-# 5. 加载数据（只有在需要时加载）
-mean_norms, sd_norms, questions, weights = load_data()
 
-# 6. 获取题目列表
+# 74道题 
 items = list(questions['en'])
-
-# 7. 进一步优化：只在性别、年龄变化时加载模型或更新其他部分
-st.session_state.items = items  # 缓存到 session_state
-
-
-
-
-
 
 # 显示表单
 st.title("🔍 Big Five Personality Test + Career Recommender")
@@ -351,14 +325,11 @@ with st.form("bfi_form"):
             value=st.session_state.get(key, 3),
             key=key
         )
-    if all(v is not None for v in response_dict.values()):
-        submitted = st.form_submit_button("🎯 Submit and Recommend Careers")
-    else:
-        submitted = False
-        st.warning("Please answer all questions before submitting.")  # 提示用户回答所有问题
         
 
-    
+    # 提交按钮放在 form 内部
+    submitted = st.form_submit_button("🎯 Submit and Recommend Careers")
+
 
 if submitted:
     # Step 1: 获取 norm μ 和 σ
@@ -390,10 +361,31 @@ if submitted:
         for rank, idx in enumerate(top_indices, 1):
             st.write(f"NO.{rank} - {job_names[idx]}")
 
-        st.subheader("😬 Least Recommended Careers Bottom-10")
-        for rank, idx in enumerate(bottom_indices, 1):
+         st.subheader("😬 Least Recommended Careers Bottom-10")
+         for rank, idx in enumerate(top_indices, 1):
             st.write(f"NO.{rank} - {job_names[idx]}")
 
+import plotly.graph_objects as go
+
+trait_names = ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]
+fig = go.Figure()
+
+fig.add_trace(go.Scatterpolar(
+    r=big5_scores,
+    theta=trait_names,
+    fill='toself',
+    name='Your Personality'
+))
+
+fig.update_layout(
+    polar=dict(
+        radialaxis=dict(visible=True, range=[0, 100])
+    ),
+    showlegend=False,
+    title="🧬 Your Big Five Profile (T scores)"
+)
+
+st.plotly_chart(fig)
 
    
 
