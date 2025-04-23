@@ -5,6 +5,7 @@ matplotlib
 scikit-learn
 joblib
 plotly
+fpdf
 openpyxl
 torch==2.3.0+cpu
 -f https://download.pytorch.org/whl/torch_stable.html
