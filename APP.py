@@ -1,4 +1,4 @@
-# %%
+tions# %%
 import pandas as pd
 import numpy as np
 import torch
@@ -98,10 +98,10 @@ text_dict = {
         "Select your gender:",
         "Enter your age:",
         "Sorry, your age does not meet the requirements.",
-        "25",  # Default age
-        "Female",  # Default gender
         "👇 Please fill in your questionnaire answers",
-        "Please answer all questions before submitting."
+        "Please answer all questions before submitting.",
+        "Top-10 Recommended Careers",
+        "Bottom-10 Least Recommended Careers"
     ],
     "fr": [
         "🔍 Test de personnalité Big Five + Recommandation de carrière",
@@ -109,10 +109,11 @@ text_dict = {
         "Sélectionnez votre sexe :",
         "Entrez votre âge :",
         "Désolé, votre âge ne répond pas aux exigences.",
-        "25",  # Âge par défaut
-        "Femme",  # Sexe par défaut
         "👇 Veuillez remplir vos réponses au questionnaire",
-        "Veuillez répondre à toutes les questions avant de soumettre."
+        "Veuillez répondre à toutes les questions avant de soumettre.",
+        "Top-10 Carrières recommandées",
+        "Bottom-10 Carrières les moins recommandées"
+    },
     ],
     "es": [
         "🔍 Test de personalidad Big Five + Recomendación de carrera",
@@ -120,10 +121,10 @@ text_dict = {
         "Seleccione su género:",
         "Ingrese su edad:",
         "Lo siento, su edad no cumple con los requisitos.",
-        "25",  # Edad por defecto
-        "Femenino",  # Género por defecto
         "👇 Por favor, complete sus respuestas al cuestionario",
-        "Por favor, responda todas las preguntas antes de enviar."
+        "Por favor, responda todas las preguntas antes de enviar.",
+        "Top-10 Carreras recomendadas",
+        "Bottom-10 Carreras menos recomendadas"
     ],
     "ar": [
         "🔍 اختبار الشخصية Big Five + توصية المهن",
@@ -131,10 +132,10 @@ text_dict = {
         "حدد جنسك:",
         "أدخل عمرك:",
         "عذرًا، عمرك لا يتوافق مع المتطلبات.",
-        "25",  # العمر الافتراضي
-        "أنثى",  # الجنس الافتراضي
         "👇 يرجى ملء إجاباتك على الاستبيان",
-        "يرجى الإجابة على جميع الأسئلة قبل الإرسال."
+        "يرجى الإجابة على جميع الأسئلة قبل الإرسال.",
+        "أفضل 10 وظائف موصى بها",
+        "أسوأ 10 وظائف غير موصى بها"
     ],
     "ru": [
         "🔍 Тест личности Big Five + Рекомендатор профессий",
@@ -142,21 +143,21 @@ text_dict = {
         "Выберите ваш пол:",
         "Введите ваш возраст:",
         "Извините, ваш возраст не соответствует требованиям.",
-        "25",  # По умолчанию
-        "Женский",  # По умолчанию
         "👇 Пожалуйста, заполните свои ответы на вопросы",
-        "Пожалуйста, ответьте на все вопросы перед отправкой."
+        "Пожалуйста, ответьте на все вопросы перед отправкой.",
+        "Топ-10 рекомендуемых профессий",
+        "Топ-10 наименее рекомендуемых профессий"
     ],
     "zh": [
         "🔍 五大人格测试 + 职业推荐器",
-        "请根据您的真实感受对以下陈述进行评分：**1（非常不同意）到6（非常同意）**",
+        "请根据您的真实感受对以下陈述进行评分：**1（强烈不同意）到6（强烈同意）**",
         "选择您的性别：",
         "请输入您的年龄：",
         "抱歉，您的年龄不符合要求。",
-        "25",  # 默认年龄
-        "女性",  # 默认性别
         "👇 请填写您的问卷答案",
         "请在提交前回答所有问题。"
+        "最推荐的10类职业",
+        "最不推荐的10类职业"
     ]
 }
 
@@ -165,7 +166,7 @@ language_options = list(language_display.values())
 
 col1, col2 = st.columns(2)
 with col1:
-    selected_language_name = st.selectbox("Select your language:", language_options)
+    selected_language_name = st.selectbox("language:", language_options)
 
 selected_language_code = [key for key, value in language_display.items() if value == selected_language_name][0]
 
@@ -192,10 +193,10 @@ with st.form("bfi_form"):
     if "gender" not in st.session_state:
         st.session_state.gender = "Female"  # 默认性别
     
-    st.subheader(selected_text[7])  # 问卷填写提示
+    st.subheader(selected_text[5])  # 问卷填写提示
 
     response_dict = {}
-    for i, q in enumerate(selected_text[5:]):
+    for i, q in enumerate(selected_questions):
         key = f"q{i}"
         response_dict[key] = st.slider(
             q,
@@ -208,7 +209,7 @@ with st.form("bfi_form"):
         submitted = st.form_submit_button("🎯 Submit and Recommend Careers")
     else:
         submitted = False
-        st.warning(selected_text[8])  # 提示用户回答所有问题
+        st.warning(selected_text[6])  # 提示用户回答所有问题
 
 # %%
 if submitted:
@@ -274,11 +275,11 @@ if submitted:
         top_indices = np.argsort(scores)[-10:][::-1]
         bottom_indices = np.argsort(scores)[:10]
 
-        st.subheader("🧠 Recommended Careers Top-10")
+        st.subheader("✅ selected_text[7]")
         for rank, idx in enumerate(top_indices, 1):
             st.write(f"NO.{rank} - {job_names[idx]}")
 
-        st.subheader("😬 Least Recommended Careers Bottom-10")
+        st.subheader("❌ selected_text[8]")
         for rank, idx in enumerate(bottom_indices, 1):
             st.write(f"NO.{rank} - {job_names[idx]}")
 
