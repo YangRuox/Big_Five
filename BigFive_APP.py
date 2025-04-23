@@ -414,47 +414,50 @@ if submitted:
         for rank, idx in enumerate(bottom_indices, 1):
             st.write(f"NO.{rank} - {job_names[idx]}")
 
-        # 🌟 生成 PDF
-        pdf = FPDF()
-        pdf.add_page()
 
-        pdf.set_font("Arial", size=12)
+# 安全字符处理函数，避免 UnicodeEncodeError
+def safe_text(text):
+    # 替换常见导致错误的字符：智能引号、破折号等
+    return str(text).replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"').replace("–", "-").replace("—", "-")
 
-        # 添加标题
-        pdf.cell(200, 10, txt="Big Five Personality Test Results", ln=True, align='C')
+# 🌟 生成 PDF
+pdf = FPDF()
+pdf.add_page()
+pdf.set_font("Arial", size=12)
 
-        # 个人信息
-        pdf.ln(10)
-        pdf.cell(200, 10, txt=f"Gender: {gender}", ln=True)
-        pdf.cell(200, 10, txt=f"Age: {age}", ln=True)
+# 添加标题
+pdf.cell(200, 10, txt=safe_text("Big Five Personality Test Results"), ln=True, align='C')
 
-        # Big Five Scores
-        pdf.ln(10)
-        pdf.cell(200, 10, txt="Big Five Personality Scores (T scores):", ln=True)
-        for trait, score in zip(trait_names, T_scores):
-            pdf.cell(200, 10, txt=f"{trait}: {score:.2f}", ln=True)
+# 个人信息
+pdf.ln(10)
+pdf.cell(200, 10, txt=safe_text(f"Gender: {gender}"), ln=True)
+pdf.cell(200, 10, txt=safe_text(f"Age: {age}"), ln=True)
 
-        # 推荐职业
-        pdf.ln(10)
-        pdf.cell(200, 10, txt="Recommended Careers Top-10:", ln=True)
-        for rank, idx in enumerate(top_indices, 1):
-            pdf.cell(200, 10, txt=f"{rank}. {job_names[idx]}", ln=True)
+# Big Five Scores
+pdf.ln(10)
+pdf.cell(200, 10, txt=safe_text("Big Five Personality Scores (T scores):"), ln=True)
+for trait, score in zip(trait_names, T_scores):
+    pdf.cell(200, 10, txt=safe_text(f"{trait}: {score:.2f}"), ln=True)
 
-        # 最不推荐职业
-        pdf.ln(10)
-        pdf.cell(200, 10, txt="Least Recommended Careers Bottom-10:", ln=True)
-        for rank, idx in enumerate(bottom_indices, 1):
-            pdf.cell(200, 10, txt=f"{rank}. {job_names[idx]}", ln=True)
+# 推荐职业
+pdf.ln(10)
+pdf.cell(200, 10, txt=safe_text("Recommended Careers Top-10:"), ln=True)
+for rank, idx in enumerate(top_indices, 1):
+    pdf.cell(200, 10, txt=safe_text(f"{rank}. {job_names[idx]}"), ln=True)
 
-        # 保存 PDF 文件
-        pdf_output = "BigFive_Test_Result.pdf"
-        pdf.output(pdf_output)
+# 最不推荐职业
+pdf.ln(10)
+pdf.cell(200, 10, txt=safe_text("Least Recommended Careers Bottom-10:"), ln=True)
+for rank, idx in enumerate(bottom_indices, 1):
+    pdf.cell(200, 10, txt=safe_text(f"{rank}. {job_names[idx]}"), ln=True)
 
-        # 提供下载链接
-        with open(pdf_output, "rb") as f:
-            st.download_button("Download Your PDF Report", f, file_name=pdf_output)
+# 保存 PDF 文件
+pdf_output = "BigFive_Test_Result.pdf"
+pdf.output(pdf_output)
 
-
+# 提供下载链接
+with open(pdf_output, "rb") as f:
+    st.download_button("Download Your PDF Report", f, file_name=pdf_output)
 
 
 
