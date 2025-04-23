@@ -4,6 +4,7 @@ numpy
 matplotlib
 scikit-learn
 joblib
+plotly
 openpyxl
 torch==2.3.0+cpu
 -f https://download.pytorch.org/whl/torch_stable.html
