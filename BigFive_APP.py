@@ -320,14 +320,25 @@ def load_data():
 
 mean_norms, sd_norms, questions, weights = load_data()
 
+if "age" not in st.session_state:
+    st.session_state.age = 25  # 默认年龄
+
+if "gender" not in st.session_state:
+    st.session_state.gender = "Female"  # 默认性别
+
 # 性别选择
-gender = st.selectbox("Select your gender:", ["Female", "Male"])
+gender = st.selectbox("Select your gender:", ["Female", "Male"], index=["Female", "Male"].index(st.session_state.gender))
 
 # 年龄输入
-age = st.number_input("Enter your age:", min_value=18, max_value=70, value=25)
+age = st.number_input("Enter your age:", min_value=18, max_value=70, value=st.session_state.age)
 if age < 18 or age > 70:
     st.warning("Sorry, your age does not meet the requirements.")
     st.stop()
+
+# 更新 session_state
+st.session_state.age = age
+st.session_state.gender = gender
+
    
 # 分组
 if gender == "Female":
