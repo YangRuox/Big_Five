@@ -83,24 +83,38 @@ def load_data():
 
 mean_norms, sd_norms, questions, weights = load_data()
 
-language_options = ['en', 'fr', 'es', 'ar', 'ru', 'zh']
-selected_language = st.selectbox("Select your language:", language_options)
+language_display = {
+    'ar': 'العربية',
+    'en': 'English',
+    'es': 'Español',
+    'fr': 'Français',   
+    'ru': 'Русский',
+    'zh': '中文'
+}
 
-# 获取选择的语言列
-selected_questions = questions[selected_language]
+language_options = list(language_display.values())
+
+col1, col2 = st.columns(2)
+with col1:
+    selected_language_name = st.selectbox("Select your language:", language_options)
+
+selected_language_code = [key for key, value in language_display.items() if value == selected_language_name][0]
+
+
+selected_questions = questions[selected_language_code]
 
 # 显示表单
 with st.form("bfi_form"):
     st.title("🔍 Big Five Personality Test + Career Recommender")
     st.markdown("Please rate the following statements based on your true feelings: **1 (Strongly Disagree) to 6 (Strongly Agree)**")
   
-    # 性别年龄选择
+
     gender = st.selectbox("Select your gender:", ["Female", "Male"])
     age = st.number_input("Enter your age:", min_value=18, max_value=70, value=25)
     
     if age < 18 or age > 70:
         st.warning("Sorry, your age does not meet the requirements.")
-        st.stop()  # 提交表单之前停止执行
+        st.stop()  
 
     if "age" not in st.session_state:
         st.session_state.age = 25  # 默认年龄
