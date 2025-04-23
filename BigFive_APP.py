@@ -283,18 +283,6 @@ class JobRecommenderMLP(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-# 1. 缓存模型加载
-@st.cache_resource
-def load_model():
-    model = JobRecommenderMLP(input_dim=5, hidden_dim=128, output_dim=263)
-    model.load_state_dict(torch.load("your_model.pth", map_location=torch.device("cpu")))
-    model.eval()
-    return model
-
-# 2. 缓存 scaler 加载
-@st.cache_resource
-def load_scaler():
-    return joblib.load("your_scaler.pkl")
 
 # 1. 缓存模型加载
 @st.cache_resource
