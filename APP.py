@@ -100,9 +100,10 @@ text_dict = {
         "Sorry, your age does not meet the requirements.",
         "👇 Please fill in your questionnaire answers",
         "Please answer all questions before submitting.",
-        "Top-10 Recommended Careers",
-        "Bottom-10 Least Recommended Careers",
-        "🎯 Submit and Recommend Careers"
+        "✅Top-10 Recommended Careers",
+        "❌Bottom-10 Least Recommended Careers",
+        "🎯 Submit and Recommend Careers",
+        "Female, Male"
     ],
     "fr": [
         "🔍 Test de personnalité Big Five + Recommandation de carrière",
@@ -112,9 +113,10 @@ text_dict = {
         "Désolé, votre âge ne répond pas aux exigences.",
         "👇 Veuillez remplir vos réponses au questionnaire",
         "Veuillez répondre à toutes les questions avant de soumettre.",
-        "Top-10 Carrières recommandées",
-        "Bottom-10 Carrières les moins recommandées",
-        "🎯 Soumettre et recommander des carrières"
+        "✅Top-10 Carrières recommandées",
+        "❌Bottom-10 Carrières les moins recommandées",
+        "🎯 Soumettre et recommander des carrières",
+        "Femme, Homme"
     ],
     "es": [
         "🔍 Test de personalidad Big Five + Recomendación de carrera",
@@ -124,9 +126,10 @@ text_dict = {
         "Lo siento, su edad no cumple con los requisitos.",
         "👇 Por favor, complete sus respuestas al cuestionario",
         "Por favor, responda todas las preguntas antes de enviar.",
-        "Top-10 Carreras recomendadas",
-        "Bottom-10 Carreras menos recomendadas",
-        "🎯 Enviar y recomendar carreras"
+        "✅Top-10 Carreras recomendadas",
+        "❌Bottom-10 Carreras menos recomendadas",
+        "🎯 Enviar y recomendar carreras,
+        "Mujer, Hombre"
     ],
     "ar": [
         "🔍 اختبار الشخصية Big Five + توصية المهن",
@@ -136,9 +139,10 @@ text_dict = {
         "عذرًا، عمرك لا يتوافق مع المتطلبات.",
         "👇 يرجى ملء إجاباتك على الاستبيان",
         "يرجى الإجابة على جميع الأسئلة قبل الإرسال.",
-        "أفضل 10 وظائف موصى بها",
-        "أسوأ 10 وظائف غير موصى بها",
-        "🎯 إرسال وتوصية الوظائف"
+        "✅أفضل 10 وظائف موصى بها",
+        "❌أسوأ 10 وظائف غير موصى بها",
+        "🎯 إرسال وتوصية الوظائف",
+        "أنثى, ذكر"
     ],
     "ru": [
         "🔍 Тест личности Big Five + Рекомендатор профессий",
@@ -148,21 +152,23 @@ text_dict = {
         "Извините, ваш возраст не соответствует требованиям.",
         "👇 Пожалуйста, заполните свои ответы на вопросы",
         "Пожалуйста, ответьте на все вопросы перед отправкой.",
-        "Топ-10 рекомендуемых профессий",
-        "Топ-10 наименее рекомендуемых профессий",
-        "🎯 Отправить и рекомендовать профессии"
+        "✅Топ-10 рекомендуемых профессий",
+        "❌Топ-10 наименее рекомендуемых профессий",
+        "🎯 Отправить и рекомендовать профессии",
+        "Женщина, Мужчина"
     ],
     "zh": [
         "🔍 五大人格测试 + 职业推荐器",
-        "请根据您的真实感受对以下陈述进行评分：**1（强烈不同意）到6（强烈同意）**",
+        "请根据您的真实感受对以下陈述进行评分：**1（强烈不同意）到 6（强烈同意）**",
         "选择您的性别：",
         "请输入您的年龄：",
         "抱歉，您的年龄不符合要求。",
         "👇 请填写您的问卷答案",
         "请在提交前回答所有问题。",
-        "最推荐的10类职业",
-        "最不推荐的10类职业",
-        "🎯 提交并推荐职业"
+        "✅最推荐的10类职业",
+        "❌最不推荐的10类职业",
+        "🎯 提交并推荐职业",
+        "女性, 男性"
     ]
 }
 
@@ -184,7 +190,7 @@ with st.form("bfi_form"):
     st.markdown(selected_text[1])  # 介绍
     
     # 性别选择
-    gender = st.selectbox(selected_text[2], ["👩", "👨"])
+    gender = st.selectbox(selected_text[2], [selected_text[10]])
     age = st.number_input(selected_text[3], min_value=18, max_value=70, value=25)
     
     if age < 18 or age > 70:
@@ -279,11 +285,11 @@ if submitted:
         top_indices = np.argsort(scores)[-10:][::-1]
         bottom_indices = np.argsort(scores)[:10]
 
-        st.subheader("✅ selected_text[7]")
+        st.subheader(selected_text[7])
         for rank, idx in enumerate(top_indices, 1):
             st.write(f"NO.{rank} - {job_names[idx]}")
 
-        st.subheader("❌ selected_text[8]")
+        st.subheader(selected_text[8])
         for rank, idx in enumerate(bottom_indices, 1):
             st.write(f"NO.{rank} - {job_names[idx]}")
 
