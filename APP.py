@@ -83,13 +83,14 @@ def load_data():
 
 mean_norms, sd_norms, questions, weights = load_data()
 
-# 74道题 
-items = list(questions['en'])
+language_options = ['en', 'fr', 'es', 'ar', 'ru', 'zh']
+selected_language = st.selectbox("Select your language:", language_options)
 
-response_dict = {}
+# 获取选择的语言列
+selected_questions = questions[selected_language]
 
+# 显示表单
 with st.form("bfi_form"):
-    # 显示表单
     st.title("🔍 Big Five Personality Test + Career Recommender")
     st.markdown("Please rate the following statements based on your true feelings: **1 (Strongly Disagree) to 6 (Strongly Agree)**")
   
@@ -110,7 +111,8 @@ with st.form("bfi_form"):
     st.subheader("👇 Please fill in your questionnaire answers")
 
     # 问题的滑动条
-    for i, q in enumerate(questions["en"]):
+    response_dict = {}
+    for i, q in enumerate(selected_questions):
         key = f"q{i}"
         response_dict[key] = st.slider(
             q,
@@ -125,8 +127,6 @@ with st.form("bfi_form"):
     else:
         submitted = False
         st.warning("Please answer all questions before submitting.")  # 提示用户回答所有问题
-
-
 
 
 # %%
