@@ -7,7 +7,6 @@ joblib
 plotly
 fpdf
 fpdf2
-time
 openpyxl
 torch==2.3.0+cpu
 -f https://download.pytorch.org/whl/torch_stable.html
