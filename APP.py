@@ -10,7 +10,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
-from sklearn.metrics.pairwise import cosine_similarity
+from collections import defaultdict
 from joblib import load
 import streamlit as st
 import joblib
@@ -28,6 +28,10 @@ job_codes = np.load("job_codes.npy", allow_pickle=True)
 
 scaler = joblib.load("your_scaler.pkl")  
 similarity_matrix = np.load("similarity_matrix.npy")
+
+text_dict = np.load("text_dict.npy", allow_pickle=True).item()
+language_display = np.load("language_display.npy", allow_pickle=True).item()
+
 
 # %%
 class JobRecommenderMLP(nn.Module):
@@ -83,94 +87,8 @@ def load_data():
 
 mean_norms, sd_norms, questions, weights = load_data()
 
-language_display = {
-    'ar': 'العربية',
-    'en': 'English',
-    'es': 'Español',
-    'fr': 'Français',   
-    'ru': 'Русский',
-    'zh': '中文'
-}
-text_dict = {
-    "en": [
-        "🔍 Big Five Personality Test + Career Recommender",
-        "Please rate the following statements based on your true feelings: **1 (Strongly Disagree) to 6 (Strongly Agree)**",
-        "Select your gender:",
-        "Enter your age:",
-        "Sorry, your age does not meet the requirements.",
-        "👇 Please fill in your questionnaire answers",
-        "Please answer all questions before submitting.",
-        "✅Top-10 Recommended Careers",
-        "❌Bottom-10 Least Recommended Careers",
-        "🎯 Submit and Recommend Careers",
-        "Female, Male"
-    ],
-    "fr": [
-        "🔍 Test de personnalité Big Five + Recommandation de carrière",
-        "Veuillez évaluer les déclarations suivantes en fonction de vos véritables sentiments : **1 (Pas du tout d'accord) à 6 (Tout à fait d'accord)**",
-        "Sélectionnez votre sexe :",
-        "Entrez votre âge :",
-        "Désolé, votre âge ne répond pas aux exigences.",
-        "👇 Veuillez remplir vos réponses au questionnaire",
-        "Veuillez répondre à toutes les questions avant de soumettre.",
-        "✅Top-10 Carrières recommandées",
-        "❌Bottom-10 Carrières les moins recommandées",
-        "🎯 Soumettre et recommander des carrières",
-        "Femme, Homme"
-    ],
-    "es": [
-        "🔍 Test de personalidad Big Five + Recomendación de carrera",
-        "Por favor, califique las siguientes afirmaciones según sus verdaderos sentimientos: **1 (Totalmente en desacuerdo) a 6 (Totalmente de acuerdo)**",
-        "Seleccione su género:",
-        "Ingrese su edad:",
-        "Lo siento, su edad no cumple con los requisitos.",
-        "👇 Por favor, complete sus respuestas al cuestionario",
-        "Por favor, responda todas las preguntas antes de enviar.",
-        "✅Top-10 Carreras recomendadas",
-        "❌Bottom-10 Carreras menos recomendadas",
-        "🎯 Enviar y recomendar carreras",
-        "Mujer, Hombre"
-    ],
-    "ar": [
-        "🔍 اختبار الشخصية Big Five + توصية المهن",
-        "يرجى تقييم العبارات التالية بناءً على مشاعرك الحقيقية: **1 (لا أوافق بشدة) إلى 6 (أوافق بشدة)**",
-        "حدد جنسك:",
-        "أدخل عمرك:",
-        "عذرًا، عمرك لا يتوافق مع المتطلبات.",
-        "👇 يرجى ملء إجاباتك على الاستبيان",
-        "يرجى الإجابة على جميع الأسئلة قبل الإرسال.",
-        "✅أفضل 10 وظائف موصى بها",
-        "❌أسوأ 10 وظائف غير موصى بها",
-        "🎯 إرسال وتوصية الوظائف",
-        "أنثى, ذكر"
-    ],
-    "ru": [
-        "🔍 Тест личности Big Five + Рекомендатор профессий",
-        "Пожалуйста, оцените следующие утверждения, основываясь на ваших истинных чувствах: **1 (Совсем не согласен) до 6 (Полностью согласен)**",
-        "Выберите ваш пол:",
-        "Введите ваш возраст:",
-        "Извините, ваш возраст не соответствует требованиям.",
-        "👇 Пожалуйста, заполните свои ответы на вопросы",
-        "Пожалуйста, ответьте на все вопросы перед отправкой.",
-        "✅Топ-10 рекомендуемых профессий",
-        "❌Топ-10 наименее рекомендуемых профессий",
-        "🎯 Отправить и рекомендовать профессии",
-        "Женщина, Мужчина"
-    ],
-    "zh": [
-        "🔍 五大人格测试 + 职业推荐器",
-        "请根据您的真实感受对以下陈述进行评分：**1（强烈不同意）到 6（强烈同意）**",
-        "选择您的性别：",
-        "请输入您的年龄：",
-        "抱歉，您的年龄不符合要求。",
-        "👇 请填写您的问卷答案",
-        "请在提交前回答所有问题。",
-        "✅最推荐的10类职业",
-        "❌最不推荐的10类职业",
-        "🎯 提交并推荐职业",
-        "女性, 男性"
-    ]
-}
+text_dict = np.load("text_dict.npy", allow_pickle=True).item()
+language_display = np.load("language_display.npy", allow_pickle=True).item()
 
 language_options = list(language_display.values())
 
