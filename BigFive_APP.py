@@ -342,35 +342,6 @@ with st.form("bfi_form"):
         submitted = False
         st.warning("Please answer all questions before submitting.")  # 提示用户回答所有问题
 
-import streamlit as st
-import numpy as np
-import torch
-import time
-from fpdf import FPDF
-import joblib
-import plotly.graph_objects as go
-
-# ========== 资源加载 ==========
-model = torch.load("model.pth", map_location=torch.device('cpu'))
-model.eval()
-scaler = joblib.load("standardizer.pkl")
-job_names = joblib.load("job_names.pkl")
-similarity_matrix = joblib.load("similarity_matrix.pkl")
-weights = joblib.load("weightsB5.pkl")
-mean_norms = joblib.load("mean_norms.pkl")
-sd_norms = joblib.load("sd_norms.pkl")
-questions = joblib.load("questions.pkl")
-
-st.title("Big Five Personality to Career Recommendation")
-
-gender = st.selectbox("Gender", ["Male", "Female", "Other"])
-age = st.number_input("Age", min_value=10, max_value=100, value=25)
-
-response_dict = {}
-for i in range(len(questions)):
-    response_dict[f"q{i}"] = st.slider(questions[i], 1, 5, 3)
-
-submitted = st.button("Submit")
 
 if submitted:
     st.session_state.age = age
