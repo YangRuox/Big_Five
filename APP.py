@@ -184,7 +184,7 @@ with st.form("bfi_form"):
     st.markdown(selected_text[1])  # 介绍
     
     # 性别选择
-    gender = st.selectbox(selected_text[2], ["Female", "Male"])
+    gender = st.selectbox(selected_text[2], ["👩", "👨"])
     age = st.number_input(selected_text[3], min_value=18, max_value=70, value=25)
     
     if age < 18 or age > 70:
@@ -210,7 +210,7 @@ with st.form("bfi_form"):
         )
 
     if all(v is not None for v in response_dict.values()):
-        submitted = st.form_submit_button("selected_text[9]")
+        submitted = st.form_submit_button(selected_text[9])
     else:
         submitted = False
         st.warning(selected_text[6])  # 提示用户回答所有问题
