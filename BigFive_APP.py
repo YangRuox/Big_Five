@@ -284,20 +284,7 @@ class JobRecommenderMLP(nn.Module):
         return self.model(x)
 
 
-# 1. 缓存模型加载
-@st.cache_resource
-def load_model():
-    model = JobRecommenderMLP(input_dim=5, hidden_dim=128, output_dim=263)
-    model.load_state_dict(torch.load("your_model.pth", map_location=torch.device("cpu")))
-    model.eval()
-    return model
-
-# 2. 缓存 scaler 加载
-@st.cache_resource
-def load_scaler():
-    return joblib.load("your_scaler.pkl")
-
-# 3. 缓存数据资源
+# 1. 缓存数据加载
 @st.cache_data
 def load_data():
     mean_norms = pd.read_csv('meanNorms.tsv', sep='\t')
@@ -306,42 +293,40 @@ def load_data():
     weights = pd.read_csv('weightsB5.tsv', sep='\t')
     return mean_norms, sd_norms, questions, weights
 
-# 4. 初始化 session_state 的数据（只加载一次）
-if "loaded_data" not in st.session_state:
-    st.session_state.mean_norms, st.session_state.sd_norms, st.session_state.questions, st.session_state.weights = load_data()
-    st.session_state.items = list(st.session_state.questions['en'])
-    st.session_state.loaded_data = True  # 标记为已加载
-
-# 5. 直接使用 session_state 中的数据
-mean_norms = st.session_state.mean_norms
-sd_norms = st.session_state.sd_norms
-questions = st.session_state.questions
-weights = st.session_state.weights
-items = st.session_state.items
-
-# 6. 设置默认性别与年龄
+# 2. 从 session_state 获取或设置默认值
 if "age" not in st.session_state:
-    st.session_state.age = 25
+    st.session_state.age = 25  # 默认年龄
+
 if "gender" not in st.session_state:
-    st.session_state.gender = "Female"
+    st.session_state.gender = "Female"  # 默认性别
 
-# 7. 性别选择与年龄输入
+# 3. 性别选择与年龄输入
 gender = st.selectbox("Select your gender:", ["Female", "Male"], index=["Female", "Male"].index(st.session_state.gender))
-age = st.number_input("Enter your age:", min_value=18, max_value=70, value=st.session_state.age)
 
+# 年龄输入
+age = st.number_input("Enter your age:", min_value=18, max_value=70, value=st.session_state.age)
 if age < 18 or age > 70:
     st.warning("Sorry, your age does not meet the requirements.")
     st.stop()
 
-# 8. 更新 session_state
+# 更新 session_state
 st.session_state.age = age
 st.session_state.gender = gender
 
-# 9. normgroup 计算
+# 4. 分组
 if gender == "Female":
     normgroup = 1 if age < 35 else 2
 else:
     normgroup = 3 if age < 35 else 4
+
+# 5. 加载数据（只有在需要时加载）
+mean_norms, sd_norms, questions, weights = load_data()
+
+# 6. 获取题目列表
+items = list(questions['en'])
+
+# 7. 进一步优化：只在性别、年龄变化时加载模型或更新其他部分
+st.session_state.items = items  # 缓存到 session_state
 
 
 
