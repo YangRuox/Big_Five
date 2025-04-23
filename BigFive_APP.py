@@ -298,19 +298,6 @@ def load_scaler():
 
 # 3. 缓存其他资源
 @st.cache_data
-def load_job_resources():
-    job_names = np.load("job_names.npy")
-    job_codes = np.load("job_codes.npy")
-    scaled_features = np.load("scaled_features.npy")
-    similarity_matrix = np.load("similarity_matrix.npy")
-    return job_names, job_codes, scaled_features, similarity_matrix
-   
-model = load_model()
-scaler = load_scaler()
-job_names, job_codes, scaled_features, similarity_matrix = load_job_resources()
-
-
-@st.cache_data
 def load_data():
     mean_norms = pd.read_csv('meanNorms.tsv', sep='\t')
     sd_norms = pd.read_csv('sdNorms.tsv', sep='\t')
@@ -318,15 +305,14 @@ def load_data():
     weights = pd.read_csv('weightsB5.tsv', sep='\t')
     return mean_norms, sd_norms, questions, weights
 
-mean_norms, sd_norms, questions, weights = load_data()
-
+# 2. 从 session_state 获取或设置默认值
 if "age" not in st.session_state:
     st.session_state.age = 25  # 默认年龄
 
 if "gender" not in st.session_state:
     st.session_state.gender = "Female"  # 默认性别
 
-# 性别选择
+# 3. 性别选择与年龄输入
 gender = st.selectbox("Select your gender:", ["Female", "Male"], index=["Female", "Male"].index(st.session_state.gender))
 
 # 年龄输入
@@ -339,16 +325,21 @@ if age < 18 or age > 70:
 st.session_state.age = age
 st.session_state.gender = gender
 
-   
-# 分组
+# 4. 分组
 if gender == "Female":
     normgroup = 1 if age < 35 else 2
 else:
     normgroup = 3 if age < 35 else 4
 
+# 5. 加载数据（只有在需要时加载）
+mean_norms, sd_norms, questions, weights = load_data()
 
-# 74道题 
+# 6. 获取题目列表
 items = list(questions['en'])
+
+# 7. 进一步优化：只在性别、年龄变化时加载模型或更新其他部分
+st.session_state.items = items  # 缓存到 session_state
+
 
 # 显示表单
 st.title("🔍 Big Five Personality Test + Career Recommender")
