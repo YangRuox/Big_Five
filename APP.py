@@ -128,7 +128,7 @@ text_dict = {
         "Por favor, responda todas las preguntas antes de enviar.",
         "✅Top-10 Carreras recomendadas",
         "❌Bottom-10 Carreras menos recomendadas",
-        "🎯 Enviar y recomendar carreras,
+        "🎯 Enviar y recomendar carreras",
         "Mujer, Hombre"
     ],
     "ar": [
