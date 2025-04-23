@@ -16,6 +16,9 @@ import streamlit as st
 import joblib
 import plotly.graph_objects as go
 from fpdf import FPDF
+import time
+
+
 # %%
 
    # 读取Excel文件
