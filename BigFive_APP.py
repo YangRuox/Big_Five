@@ -293,7 +293,7 @@ def load_data():
     questions = pd.read_csv('questions.tsv', sep='\t')
     weights = pd.read_csv('weightsB5.tsv', sep='\t')
     return mean_norms, sd_norms, questions, weights
-   
+
 mean_norms, sd_norms, questions, weights = load_data()
 
 # 74道题 
@@ -302,25 +302,25 @@ items = list(questions['en'])
 response_dict = {}
 
 with st.form("bfi_form"):
-   # 显示表单
-   st.title("🔍 Big Five Personality Test + Career Recommender")
-   st.markdown("Please rate the following statements based on your true feelings: **1 (Strongly Disagree) to 5 (Strongly Agree)**")
+    # 显示表单
+    st.title("🔍 Big Five Personality Test + Career Recommender")
+    st.markdown("Please rate the following statements based on your true feelings: **1 (Strongly Disagree) to 5 (Strongly Agree)**")
   
-   # 性别年龄选择
-   gender = st.selectbox("Select your gender:", ["Female", "Male"])
-   age = st.number_input("Enter your age:", min_value=18, max_value=70, value=25)
-   
-   if age < 18 or age > 70:
-       st.warning("Sorry, your age does not meet the requirements.")
-       st.stop()  # 提交表单之前停止执行
+    # 性别年龄选择
+    gender = st.selectbox("Select your gender:", ["Female", "Male"])
+    age = st.number_input("Enter your age:", min_value=18, max_value=70, value=25)
+    
+    if age < 18 or age > 70:
+        st.warning("Sorry, your age does not meet the requirements.")
+        st.stop()  # 提交表单之前停止执行
 
-   if "age" not in st.session_state:
+    if "age" not in st.session_state:
         st.session_state.age = 25  # 默认年龄
 
-   if "gender" not in st.session_state:
+    if "gender" not in st.session_state:
         st.session_state.gender = "Female"  # 默认性别
     
-   st.subheader("👇 Please fill in your questionnaire answers")
+    st.subheader("👇 Please fill in your questionnaire answers")
 
     # 问题的滑动条
     for i, q in enumerate(questions["en"]):
@@ -343,7 +343,7 @@ if submitted:
     st.session_state.age = age
     st.session_state.gender = gender
 
-   # 分组
+    # 分组
     if gender == "Female":
         normgroup = 1 if age < 35 else 2
     else:
@@ -394,7 +394,6 @@ if submitted:
     )
 
     st.plotly_chart(fig)
-    
 
     # Step 6: 模型预测
     with torch.no_grad():
@@ -413,46 +412,44 @@ if submitted:
             st.write(f"NO.{rank} - {job_names[idx]}")
 
         # 🌟 生成 PDF
-    pdf = FPDF()
-    pdf.add_page()
+        pdf = FPDF()
+        pdf.add_page()
 
-    pdf.set_font("Arial", size=12)
+        pdf.set_font("Arial", size=12)
 
-    # 添加标题
-    pdf.cell(200, 10, txt="Big Five Personality Test Results", ln=True, align='C')
+        # 添加标题
+        pdf.cell(200, 10, txt="Big Five Personality Test Results", ln=True, align='C')
 
-    # 个人信息
-    pdf.ln(10)
-    pdf.cell(200, 10, txt=f"Gender: {gender}", ln=True)
-    pdf.cell(200, 10, txt=f"Age: {age}", ln=True)
+        # 个人信息
+        pdf.ln(10)
+        pdf.cell(200, 10, txt=f"Gender: {gender}", ln=True)
+        pdf.cell(200, 10, txt=f"Age: {age}", ln=True)
 
-    # Big Five Scores
-    pdf.ln(10)
-    pdf.cell(200, 10, txt="Big Five Personality Scores (T scores):", ln=True)
-    for trait, score in zip(trait_names, T_scores):
-        pdf.cell(200, 10, txt=f"{trait}: {score:.2f}", ln=True)
+        # Big Five Scores
+        pdf.ln(10)
+        pdf.cell(200, 10, txt="Big Five Personality Scores (T scores):", ln=True)
+        for trait, score in zip(trait_names, T_scores):
+            pdf.cell(200, 10, txt=f"{trait}: {score:.2f}", ln=True)
 
-    # 推荐职业
-    pdf.ln(10)
-    pdf.cell(200, 10, txt="Recommended Careers Top-10:", ln=True)
-    for rank, idx in enumerate(top_indices, 1):
-        pdf.cell(200, 10, txt=f"{rank}. {job_names[idx]}", ln=True)
+        # 推荐职业
+        pdf.ln(10)
+        pdf.cell(200, 10, txt="Recommended Careers Top-10:", ln=True)
+        for rank, idx in enumerate(top_indices, 1):
+            pdf.cell(200, 10, txt=f"{rank}. {job_names[idx]}", ln=True)
 
-    # 最不推荐职业
-    pdf.ln(10)
-    pdf.cell(200, 10, txt="Least Recommended Careers Bottom-10:", ln=True)
-    for rank, idx in enumerate(bottom_indices, 1):
-        pdf.cell(200, 10, txt=f"{rank}. {job_names[idx]}", ln=True)
+        # 最不推荐职业
+        pdf.ln(10)
+        pdf.cell(200, 10, txt="Least Recommended Careers Bottom-10:", ln=True)
+        for rank, idx in enumerate(bottom_indices, 1):
+            pdf.cell(200, 10, txt=f"{rank}. {job_names[idx]}", ln=True)
 
-    # 保存 PDF 文件
-    pdf_output = "BigFive_Test_Result.pdf"
-    pdf.output(pdf_output)
+        # 保存 PDF 文件
+        pdf_output = "BigFive_Test_Result.pdf"
+        pdf.output(pdf_output)
 
-    # 提供下载链接
-    with open(pdf_output, "rb") as f:
-        st.download_button("Download Your PDF Report", f, file_name=pdf_output)
-
-
+        # 提供下载链接
+        with open(pdf_output, "rb") as f:
+            st.download_button("Download Your PDF Report", f, file_name=pdf_output)
 
 
 
