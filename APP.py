@@ -171,7 +171,7 @@ selected_language_code = [key for key, value in language_display.items() if valu
 
 
 selected_questions = questions[selected_language_code]
-selected_text = text_dict[selected_language]
+selected_text = text_dict[selected_language_code]
 
 # 显示表单
 with st.form("bfi_form"):
