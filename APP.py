@@ -190,7 +190,7 @@ with st.form("bfi_form"):
     st.markdown(selected_text[1])  # 介绍
     
     # 性别选择
-    gender = st.selectbox(selected_text[2], [selected_text[10]])
+    gender = st.selectbox(selected_text[2], ["Female", "Male"])
     age = st.number_input(selected_text[3], min_value=18, max_value=70, value=25)
     
     if age < 18 or age > 70:
