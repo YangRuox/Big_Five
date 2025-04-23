@@ -390,7 +390,7 @@ trait_names = ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Cons
 fig = go.Figure()
 
 fig.add_trace(go.Scatterpolar(
-    r=big5_scores,
+    r=T_scores,
     theta=trait_names,
     fill='toself',
     name='Your Personality'
