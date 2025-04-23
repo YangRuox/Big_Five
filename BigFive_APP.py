@@ -14,6 +14,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 from joblib import load
 import streamlit as st
 import joblib
+import plotly.graph_objects as go
+
 # %%
 
    # 读取Excel文件
@@ -366,6 +368,31 @@ if submitted:
     # Step 5: 标准化（用你的 scaler）
     scaled_input = scaler.transform([T_scores])
 
+    trait_names = ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]
+    # 闭合雷达图数据（起点和终点一致）
+    radar_values = list(T_scores) + [T_scores[0]]
+    radar_labels = trait_names + [trait_names[0]]
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatterpolar(
+        r=radar_values,
+        theta=radar_labels,
+        fill='toself',
+        name='Your Big Five T Scores',
+        line=dict(color='royalblue')
+    ))
+
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 100], tickfont=dict(size=10)),
+        ),
+        showlegend=False,
+        title="🧬 Your Big Five Personality Profile (T scores)"
+    )
+
+    st.plotly_chart(fig)
+    
+
     # Step 6: 模型预测
     with torch.no_grad():
         input_tensor = torch.tensor(scaled_input, dtype=torch.float32)
@@ -384,34 +411,13 @@ if submitted:
 
 
 
-import plotly.graph_objects as go
 
-# Step 7: 可视化 Big Five 得分（雷达图）
-trait_names = ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]
 
-# 闭合雷达图数据（起点和终点一致）
-radar_values = list(T_scores) + [T_scores[0]]
-radar_labels = trait_names + [trait_names[0]]
 
-fig = go.Figure()
 
-fig.add_trace(go.Scatterpolar(
-    r=radar_values,
-    theta=radar_labels,
-    fill='toself',
-    name='Your Big Five T Scores',
-    line=dict(color='royalblue')
-))
 
-fig.update_layout(
-    polar=dict(
-        radialaxis=dict(visible=True, range=[0, 100], tickfont=dict(size=10)),
-    ),
-    showlegend=False,
-    title="🧬 Your Big Five Personality Profile (T scores)"
-)
 
-st.plotly_chart(fig)
+
 
    
 
