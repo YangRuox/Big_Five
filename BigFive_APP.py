@@ -342,6 +342,36 @@ with st.form("bfi_form"):
         submitted = False
         st.warning("Please answer all questions before submitting.")  # 提示用户回答所有问题
 
+import streamlit as st
+import numpy as np
+import torch
+import time
+from fpdf import FPDF
+import joblib
+import plotly.graph_objects as go
+
+# ========== 资源加载 ==========
+model = torch.load("model.pth", map_location=torch.device('cpu'))
+model.eval()
+scaler = joblib.load("standardizer.pkl")
+job_names = joblib.load("job_names.pkl")
+similarity_matrix = joblib.load("similarity_matrix.pkl")
+weights = joblib.load("weightsB5.pkl")
+mean_norms = joblib.load("mean_norms.pkl")
+sd_norms = joblib.load("sd_norms.pkl")
+questions = joblib.load("questions.pkl")
+
+st.title("Big Five Personality to Career Recommendation")
+
+gender = st.selectbox("Gender", ["Male", "Female", "Other"])
+age = st.number_input("Age", min_value=10, max_value=100, value=25)
+
+response_dict = {}
+for i in range(len(questions)):
+    response_dict[f"q{i}"] = st.slider(questions[i], 1, 5, 3)
+
+submitted = st.button("Submit")
+
 if submitted:
     st.session_state.age = age
     st.session_state.gender = gender
@@ -356,30 +386,29 @@ if submitted:
     for i in range(60):
         time.sleep(0.005)
         progress.progress(i + 1)
- 
+
     # Step 1: 获取 norm μ 和 σ
-    mu = mean_norms[mean_norms['group'] == normgroup].iloc[0, 1:].values  # 跳过 group 列
+    mu = mean_norms[mean_norms['group'] == normgroup].iloc[0, 1:].values
     sigma = sd_norms[sd_norms['group'] == normgroup].iloc[0, 1:].values
 
     # Step 2: 用户回答转 numpy
     responses = np.array([response_dict[f"q{i}"] for i in range(len(questions))])
 
-    # Step 3: 计算 Z 
+    # Step 3: Z 分数
     Z = (responses - mu) / sigma
 
-    # Step 4: 加权求 Big Five 得分（weightsB5 为 74x5，T 为 74x1，输出为 5x1）
-    big5_scores = np.dot(Z, weights.values)  # shape: (5,)
-    T_scores = 10 * big5_scores + 50 
+    # Step 4: Big Five 得分
+    big5_scores = np.dot(Z, weights.values)
+    T_scores = 10 * big5_scores + 50
 
-    # Step 5: 标准化（用你的 scaler）
+    # Step 5: 标准化
     scaled_input = scaler.transform([T_scores])
 
     trait_names = ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]
-    # 闭合雷达图数据（起点和终点一致）
     radar_values = list(T_scores) + [T_scores[0]]
     radar_labels = trait_names + [trait_names[0]]
-    fig = go.Figure()
 
+    fig = go.Figure()
     fig.add_trace(go.Scatterpolar(
         r=radar_values,
         theta=radar_labels,
@@ -403,8 +432,8 @@ if submitted:
         input_tensor = torch.tensor(scaled_input, dtype=torch.float32)
         logits = model(input_tensor).numpy().flatten()
         scores = similarity_matrix @ logits
-        top_indices = np.argsort(scores)[-10:][::-1]  # 前10个推荐
-        bottom_indices = np.argsort(scores)[:10]    # 最不推荐的10个
+        top_indices = np.argsort(scores)[-10:][::-1]
+        bottom_indices = np.argsort(scores)[:10]
 
         st.subheader("🧠 Recommended Careers Top-10")
         for rank, idx in enumerate(top_indices, 1):
@@ -414,50 +443,41 @@ if submitted:
         for rank, idx in enumerate(bottom_indices, 1):
             st.write(f"NO.{rank} - {job_names[idx]}")
 
+    # 安全字符处理函数
+    def safe_text(text):
+        return str(text).replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"').replace("–", "-").replace("—", "-")
 
-# 安全字符处理函数，避免 UnicodeEncodeError
-def safe_text(text):
-    # 替换常见导致错误的字符：智能引号、破折号等
-    return str(text).replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"').replace("–", "-").replace("—", "-")
+    # PDF 报告生成
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
 
-# 🌟 生成 PDF
-pdf = FPDF()
-pdf.add_page()
-pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt=safe_text("Big Five Personality Test Results"), ln=True, align='C')
 
-# 添加标题
-pdf.cell(200, 10, txt=safe_text("Big Five Personality Test Results"), ln=True, align='C')
+    pdf.ln(10)
+    pdf.cell(200, 10, txt=safe_text(f"Gender: {gender}"), ln=True)
+    pdf.cell(200, 10, txt=safe_text(f"Age: {age}"), ln=True)
 
-# 个人信息
-pdf.ln(10)
-pdf.cell(200, 10, txt=safe_text(f"Gender: {gender}"), ln=True)
-pdf.cell(200, 10, txt=safe_text(f"Age: {age}"), ln=True)
+    pdf.ln(10)
+    pdf.cell(200, 10, txt=safe_text("Big Five Personality Scores (T scores):"), ln=True)
+    for trait, score in zip(trait_names, T_scores):
+        pdf.cell(200, 10, txt=safe_text(f"{trait}: {score:.2f}"), ln=True)
 
-# Big Five Scores
-pdf.ln(10)
-pdf.cell(200, 10, txt=safe_text("Big Five Personality Scores (T scores):"), ln=True)
-for trait, score in zip(trait_names, T_scores):
-    pdf.cell(200, 10, txt=safe_text(f"{trait}: {score:.2f}"), ln=True)
+    pdf.ln(10)
+    pdf.cell(200, 10, txt=safe_text("Recommended Careers Top-10:"), ln=True)
+    for rank, idx in enumerate(top_indices, 1):
+        pdf.cell(200, 10, txt=safe_text(f"{rank}. {job_names[idx]}"), ln=True)
 
-# 推荐职业
-pdf.ln(10)
-pdf.cell(200, 10, txt=safe_text("Recommended Careers Top-10:"), ln=True)
-for rank, idx in enumerate(top_indices, 1):
-    pdf.cell(200, 10, txt=safe_text(f"{rank}. {job_names[idx]}"), ln=True)
+    pdf.ln(10)
+    pdf.cell(200, 10, txt=safe_text("Least Recommended Careers Bottom-10:"), ln=True)
+    for rank, idx in enumerate(bottom_indices, 1):
+        pdf.cell(200, 10, txt=safe_text(f"{rank}. {job_names[idx]}"), ln=True)
 
-# 最不推荐职业
-pdf.ln(10)
-pdf.cell(200, 10, txt=safe_text("Least Recommended Careers Bottom-10:"), ln=True)
-for rank, idx in enumerate(bottom_indices, 1):
-    pdf.cell(200, 10, txt=safe_text(f"{rank}. {job_names[idx]}"), ln=True)
+    pdf_output = "BigFive_Test_Result.pdf"
+    pdf.output(pdf_output)
 
-# 保存 PDF 文件
-pdf_output = "BigFive_Test_Result.pdf"
-pdf.output(pdf_output)
-
-# 提供下载链接
-with open(pdf_output, "rb") as f:
-    st.download_button("Download Your PDF Report", f, file_name=pdf_output)
+    with open(pdf_output, "rb") as f:
+        st.download_button("Download Your PDF Report", f, file_name=pdf_output)
 
 
 
