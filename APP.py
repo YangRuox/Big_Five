@@ -1,0 +1,250 @@
+# %%
+import pandas as pd
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import TensorDataset, DataLoader
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics import accuracy_score, f1_score
+from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+from sklearn.metrics.pairwise import cosine_similarity
+from joblib import load
+import streamlit as st
+import joblib
+import plotly.graph_objects as go
+from fpdf import FPDF
+import time
+
+
+# %%
+big5_df = pd.read_excel('Job-profile.xlsx', sheet_name='Big Five Domains')
+
+# %%
+job_names = np.load("job_names.npy", allow_pickle=True)
+job_codes = np.load("job_codes.npy", allow_pickle=True)
+
+scaler = joblib.load("your_scaler.pkl")  
+similarity_matrix = np.load("similarity_matrix.npy")
+
+# %%
+class JobRecommenderMLP(nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim):
+        super(JobRecommenderMLP, self).__init__()
+        self.model = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, output_dim)
+        )
+    
+    def forward(self, x):
+        return self.model(x)
+
+
+def recommend_jobs(user_big5_scores, model, similarity_matrix, top_k=10):
+    model.eval()
+    with torch.no_grad():
+        # 标准化用户输入
+        user_scaled = scaler.transform([user_big5_scores])
+        user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
+
+        # MLP 输出 logits
+        logits = model(user_tensor).numpy().flatten()
+
+        # 计算 similarity-aware score（逻辑输出 × 相似度）
+        match_score = similarity_matrix @ logits
+
+        # 取 Top-k
+        top_indices = np.argsort(match_score)[-top_k:][::-1]
+        top_jobs = [(job_codes[i], job_names[i], match_score[i]) for i in top_indices]  # 加上代码
+
+        return top_jobs
+
+# %%
+
+
+# %%
+model = JobRecommenderMLP(input_dim=5, hidden_dim=128, output_dim=len(job_names))
+model.load_state_dict(torch.load("your_model.pth"))
+model.eval()
+
+
+
+# %%
+@st.cache_data
+def load_data():
+    mean_norms = pd.read_csv('meanNorms.tsv', sep='\t')
+    sd_norms = pd.read_csv('sdNorms.tsv', sep='\t')
+    questions = pd.read_csv('questions.tsv', sep='\t')
+    weights = pd.read_csv('weightsB5.tsv', sep='\t')
+    return mean_norms, sd_norms, questions, weights
+
+mean_norms, sd_norms, questions, weights = load_data()
+
+# 74道题 
+items = list(questions['en'])
+
+response_dict = {}
+
+with st.form("bfi_form"):
+    # 显示表单
+    st.title("🔍 Big Five Personality Test + Career Recommender")
+    st.markdown("Please rate the following statements based on your true feelings: **1 (Strongly Disagree) to 6 (Strongly Agree)**")
+  
+    # 性别年龄选择
+    gender = st.selectbox("Select your gender:", ["Female", "Male"])
+    age = st.number_input("Enter your age:", min_value=18, max_value=70, value=25)
+    
+    if age < 18 or age > 70:
+        st.warning("Sorry, your age does not meet the requirements.")
+        st.stop()  # 提交表单之前停止执行
+
+    if "age" not in st.session_state:
+        st.session_state.age = 25  # 默认年龄
+
+    if "gender" not in st.session_state:
+        st.session_state.gender = "Female"  # 默认性别
+    
+    st.subheader("👇 Please fill in your questionnaire answers")
+
+    # 问题的滑动条
+    for i, q in enumerate(questions["en"]):
+        key = f"q{i}"
+        response_dict[key] = st.slider(
+            q,
+            min_value=1, max_value=6,
+            value=st.session_state.get(key, 3),
+            key=key
+        )
+
+    # 检查是否完成所有问题
+    if all(v is not None for v in response_dict.values()):
+        submitted = st.form_submit_button("🎯 Submit and Recommend Careers")
+    else:
+        submitted = False
+        st.warning("Please answer all questions before submitting.")  # 提示用户回答所有问题
+
+
+
+
+# %%
+if submitted:
+    st.session_state.age = age
+    st.session_state.gender = gender
+
+    # 分组
+    if gender == "Female":
+        normgroup = 1 if age < 35 else 2
+    else:
+        normgroup = 3 if age < 35 else 4
+
+    progress = st.progress(0, text="⏳ Processing...")
+    for i in range(60):
+        time.sleep(0.005)
+        progress.progress(i + 1)
+
+    # Step 1: 获取 norm μ 和 σ
+    mu = mean_norms[mean_norms['group'] == normgroup].iloc[0, 1:].values
+    sigma = sd_norms[sd_norms['group'] == normgroup].iloc[0, 1:].values
+
+    # Step 2: 用户回答转 numpy
+    responses = np.array([response_dict[f"q{i}"] for i in range(len(questions))])
+
+    # Step 3: Z 分数
+    Z = (responses - mu) / sigma
+
+    # Step 4: Big Five 得分
+    big5_scores = np.dot(Z, weights.values)
+    T_scores = 10 * big5_scores + 50
+
+    # Step 5: 标准化
+    scaled_input = scaler.transform([T_scores])
+
+    trait_names = ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]
+    radar_values = list(T_scores) + [T_scores[0]]
+    radar_labels = trait_names + [trait_names[0]]
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(
+        r=radar_values,
+        theta=radar_labels,
+        fill='toself',
+        name='Your Big Five T Scores',
+        line=dict(color='royalblue')
+    ))
+
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 100], tickfont=dict(size=10)),
+        ),
+        showlegend=False,
+        title="🧬 Your Big Five Personality Profile (T scores)"
+    )
+
+    st.plotly_chart(fig)
+
+    # Step 6: 模型预测
+    with torch.no_grad():
+        input_tensor = torch.tensor(scaled_input, dtype=torch.float32)
+        logits = model(input_tensor).numpy().flatten()
+        scores = similarity_matrix @ logits
+        top_indices = np.argsort(scores)[-10:][::-1]
+        bottom_indices = np.argsort(scores)[:10]
+
+        st.subheader("🧠 Recommended Careers Top-10")
+        for rank, idx in enumerate(top_indices, 1):
+            st.write(f"NO.{rank} - {job_names[idx]}")
+
+        st.subheader("😬 Least Recommended Careers Bottom-10")
+        for rank, idx in enumerate(bottom_indices, 1):
+            st.write(f"NO.{rank} - {job_names[idx]}")
+
+    # 安全字符处理函数
+    def safe_text(text):
+        return str(text).replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"').replace("–", "-").replace("—", "-")
+
+    # PDF 报告生成
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(200, 10, txt=safe_text("Big Five Personality Test Results"), ln=True, align='C')
+
+    pdf.ln(10)
+    pdf.cell(200, 10, txt=safe_text(f"Gender: {gender}"), ln=True)
+    pdf.cell(200, 10, txt=safe_text(f"Age: {age}"), ln=True)
+
+    pdf.ln(10)
+    pdf.cell(200, 10, txt=safe_text("Big Five Personality Scores (T scores):"), ln=True)
+    for trait, score in zip(trait_names, T_scores):
+        pdf.cell(200, 10, txt=safe_text(f"{trait}: {score:.2f}"), ln=True)
+
+    pdf.ln(10)
+    pdf.cell(200, 10, txt=safe_text("Recommended Careers Top-10:"), ln=True)
+    for rank, idx in enumerate(top_indices, 1):
+        pdf.cell(200, 10, txt=safe_text(f"{rank}. {job_names[idx]}"), ln=True)
+
+    pdf.ln(10)
+    pdf.cell(200, 10, txt=safe_text("Least Recommended Careers Bottom-10:"), ln=True)
+    for rank, idx in enumerate(bottom_indices, 1):
+        pdf.cell(200, 10, txt=safe_text(f"{rank}. {job_names[idx]}"), ln=True)
+
+    pdf_output = "BigFive_Test_Result.pdf"
+    pdf.output(pdf_output)
+
+    with open(pdf_output, "rb") as f:
+        st.download_button("Download Your PDF Report", f, file_name=pdf_output)
+
+
+
+
+
+
+   
+
+
+
+
+
