@@ -284,10 +284,20 @@ class JobRecommenderMLP(nn.Module):
         return self.model(x)
 
 
-mean_norms = pd.read_csv('meanNorms.tsv', sep='\t')
-sd_norms = pd.read_csv('sdNorms.tsv', sep='\t')
-questions = pd.read_csv('questions.tsv', sep='\t')
-weights = pd.read_csv('weightsB5.tsv', sep='\t')
+@st.cache_data
+def load_data():
+    mean_norms = pd.read_csv('meanNorms.tsv', sep='\t')
+    sd_norms = pd.read_csv('sdNorms.tsv', sep='\t')
+    questions = pd.read_csv('questions.tsv', sep='\t')
+    weights = pd.read_csv('weightsB5.tsv', sep='\t')
+    return mean_norms, sd_norms, questions, weights
+mean_norms, sd_norms, questions, weights = load_data()
+
+if "age" not in st.session_state:
+    st.session_state.age = 25  # 默认年龄
+
+if "gender" not in st.session_state:
+    st.session_state.gender = "Female"  # 默认性别
 
 # 性别选择
 gender = st.selectbox("Select your gender:", ["Female", "Male"])
@@ -296,7 +306,11 @@ gender = st.selectbox("Select your gender:", ["Female", "Male"])
 age = st.number_input("Enter your age:", min_value=18, max_value=70, value=25)
 if age < 18 or age > 70:
     st.warning("Sorry, your age does not meet the requirements.")
-   
+    st.stop()  # 提交表单之前停止执行
+
+st.session_state.age = age
+st.session_state.gender = gender
+
 # 分组
 if gender == "Female":
     normgroup = 1 if age < 35 else 2
@@ -317,6 +331,7 @@ response_dict = {}
 with st.form("bfi_form"):
     st.subheader("👇 Please fill in your questionnaire answers")
 
+    # 问题的滑动条
     for i, q in enumerate(questions["en"]):
         key = f"q{i}"
         response_dict[key] = st.slider(
@@ -325,11 +340,13 @@ with st.form("bfi_form"):
             value=st.session_state.get(key, 3),
             key=key
         )
-        
 
-    # 提交按钮放在 form 内部
-    submitted = st.form_submit_button("🎯 Submit and Recommend Careers")
-
+    # 检查是否完成所有问题
+    if all(v is not None for v in response_dict.values()):
+        submitted = st.form_submit_button("🎯 Submit and Recommend Careers")
+    else:
+        submitted = False
+        st.warning("Please answer all questions before submitting.")  # 提示用户回答所有问题
 
 if submitted:
     # Step 1: 获取 norm μ 和 σ
@@ -354,16 +371,18 @@ if submitted:
         input_tensor = torch.tensor(scaled_input, dtype=torch.float32)
         logits = model(input_tensor).numpy().flatten()
         scores = similarity_matrix @ logits
-        top_indices = np.argsort(scores)[-10:][::-1]
-        bottom_indices = np.argsort(scores)[:10]
+        top_indices = np.argsort(scores)[-10:][::-1]  # 前10个推荐
+        bottom_indices = np.argsort(scores)[:10]    # 最不推荐的10个
 
         st.subheader("🧠 Recommended Careers Top-10")
         for rank, idx in enumerate(top_indices, 1):
             st.write(f"NO.{rank} - {job_names[idx]}")
 
-         st.subheader("😬 Least Recommended Careers Bottom-10")
-         for rank, idx in enumerate(top_indices, 1):
+        st.subheader("😬 Least Recommended Careers Bottom-10")
+        for rank, idx in enumerate(bottom_indices, 1):
             st.write(f"NO.{rank} - {job_names[idx]}")
+
+
 
 import plotly.graph_objects as go
 
