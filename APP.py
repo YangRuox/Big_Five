@@ -50,11 +50,9 @@ class JobRecommenderMLP(nn.Module):
 def recommend_jobs(user_big5_scores, model, similarity_matrix, top_k=10):
     model.eval()
     with torch.no_grad():
-        # 标准化用户输入
         user_scaled = scaler.transform([user_big5_scores])
         user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
 
-        # MLP 输出 logits
         logits = model(user_tensor).numpy().flatten()
 
         # 计算 similarity-aware score（逻辑输出 × 相似度）
@@ -102,26 +100,24 @@ selected_language_code = [key for key, value in language_display.items() if valu
 selected_questions = questions[selected_language_code]
 selected_text = text_dict[selected_language_code]
 
-# 显示表单
 with st.form("bfi_form"):
-    st.title(selected_text[0])  # 标题
-    st.markdown(selected_text[1])  # 介绍
-    
-    # 性别选择
+    st.title(selected_text[0])  
+    st.markdown(selected_text[1]) 
+
     gender = st.selectbox(selected_text[2], ["Female", "Male"])
     age = st.number_input(selected_text[3], min_value=18, max_value=70, value=25)
     
     if age < 18 or age > 70:
-        st.warning(selected_text[4])  # 年龄警告
-        st.stop()  # 停止执行
+        st.warning(selected_text[4]) 
+        st.stop()  
 
     if "age" not in st.session_state:
-        st.session_state.age = 25  # 默认年龄
+        st.session_state.age = 25 
 
     if "gender" not in st.session_state:
-        st.session_state.gender = "Female"  # 默认性别
+        st.session_state.gender = "Female" 
     
-    st.subheader(selected_text[5])  # 问卷填写提示
+    st.subheader(selected_text[5])  
 
     response_dict = {}
     for i, q in enumerate(selected_questions):
@@ -137,14 +133,13 @@ with st.form("bfi_form"):
         submitted = st.form_submit_button(selected_text[9])
     else:
         submitted = False
-        st.warning(selected_text[6])  # 提示用户回答所有问题
+        st.warning(selected_text[6])  
 
 # %%
 if submitted:
     st.session_state.age = age
     st.session_state.gender = gender
 
-    # 分组
     if gender == "Female":
         normgroup = 1 if age < 35 else 2
     else:
@@ -155,21 +150,17 @@ if submitted:
         time.sleep(0.005)
         progress.progress(i + 1)
 
-    # Step 1: 获取 norm μ 和 σ
     mu = mean_norms[mean_norms['group'] == normgroup].iloc[0, 1:].values
     sigma = sd_norms[sd_norms['group'] == normgroup].iloc[0, 1:].values
 
-    # Step 2: 用户回答转 numpy
     responses = np.array([response_dict[f"q{i}"] for i in range(len(questions))])
 
-    # Step 3: Z 分数
     Z = (responses - mu) / sigma
 
-    # Step 4: Big Five 得分
     big5_scores = np.dot(Z, weights.values)
     T_scores = 10 * big5_scores + 50
 
-    # Step 5: 标准化
+
     scaled_input = scaler.transform([T_scores])
 
     trait_names = ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]
@@ -195,7 +186,6 @@ if submitted:
 
     st.plotly_chart(fig)
 
-    # Step 6: 模型预测
     with torch.no_grad():
         input_tensor = torch.tensor(scaled_input, dtype=torch.float32)
         logits = model(input_tensor).numpy().flatten()
@@ -211,11 +201,9 @@ if submitted:
         for rank, idx in enumerate(bottom_indices, 1):
             st.write(f"NO.{rank} - {job_names[idx]}")
 
-    # 安全字符处理函数
     def safe_text(text):
         return str(text).replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"').replace("–", "-").replace("—", "-")
 
-    # PDF 报告生成
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
