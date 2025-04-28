@@ -25,6 +25,7 @@ big5_df = pd.read_excel('Job-profile.xlsx', sheet_name='Big Five Domains')
 # %%
 job_names = np.load("job_names.npy", allow_pickle=True)
 job_codes = np.load("job_codes.npy", allow_pickle=True)
+jobs = np.load("jobs.npy", allow_pickle=True)
 
 scaler = joblib.load("your_scaler.pkl")  
 similarity_matrix = np.load("similarity_matrix.npy")
@@ -193,11 +194,11 @@ if submitted:
 
         st.subheader(selected_text[7])
         for rank, idx in enumerate(top_indices, 1):
-            st.write(f"NO.{rank} - {job_names[idx]}")
+            st.write(f"NO.{rank} - {jobs[idx][selected_language_code]}")
 
         st.subheader(selected_text[8])
         for rank, idx in enumerate(bottom_indices, 1):
-            st.write(f"NO.{rank} - {job_names[idx]}")
+            st.write(f"NO.{rank} - {jobs[idx][selected_language_code]}")
 
     def safe_text(text):
         return str(text).replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"').replace("–", "-").replace("—", "-")
