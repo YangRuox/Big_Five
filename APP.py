@@ -194,11 +194,11 @@ if submitted:
 
         st.subheader(selected_text[7])
         for rank, idx in enumerate(top_indices, 1):
-            st.write(f"NO.{rank} - {jobs[job_codes[idx]][selected_language_code]}")
+            st.write(f"NO.{rank} - {job_names[idx]}")
 
         st.subheader(selected_text[8])
         for rank, idx in enumerate(bottom_indices, 1):
-            st.write(f"NO.{rank} - {jobs[job_codes[idx]][selected_language_code]}")
+            st.write(f"NO.{rank} - {job_names[idx]}")
 
     def safe_text(text):
         return str(text).replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"').replace("–", "-").replace("—", "-")
