@@ -218,9 +218,9 @@ if submitted:
         pdf.cell(200, 10, txt=safe_text(f"{trait}: {score:.2f}"), ln=True)
 
     pdf.ln(10)
-pdf.cell(200, 10, txt=safe_text("Big Five Personality Scores (Z scores):"), ln=True)
-for trait, z in zip(trait_names, z_scores):
-    pdf.cell(200, 10, txt=safe_text(f"{trait}: {z:.2f}"), ln=True)
+    pdf.cell(200, 10, txt=safe_text("Big Five Personality Scores (Z scores):"), ln=True)
+    for trait, z in zip(trait_names, z_scores):
+        pdf.cell(200, 10, txt=safe_text(f"{trait}: {z:.2f}"), ln=True)
 
     pdf.ln(10)
     pdf.cell(200, 10, txt=safe_text("Recommended Careers Top-10:"), ln=True)
