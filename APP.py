@@ -55,12 +55,10 @@ def recommend_jobs(user_big5_scores, model, similarity_matrix, top_k=10):
 
         logits = model(user_tensor).numpy().flatten()
 
-        # 计算 similarity-aware score（逻辑输出 × 相似度）
         match_score = similarity_matrix @ logits
 
-        # 取 Top-k
         top_indices = np.argsort(match_score)[-top_k:][::-1]
-        top_jobs = [(job_codes[i], job_names[i], match_score[i]) for i in top_indices]  # 加上代码
+        top_jobs = [(job_codes[i], job_names[i], match_score[i]) for i in top_indices]  
 
         return top_jobs
 
@@ -218,6 +216,11 @@ if submitted:
     pdf.cell(200, 10, txt=safe_text("Big Five Personality Scores (T scores):"), ln=True)
     for trait, score in zip(trait_names, T_scores):
         pdf.cell(200, 10, txt=safe_text(f"{trait}: {score:.2f}"), ln=True)
+
+    pdf.ln(10)
+pdf.cell(200, 10, txt=safe_text("Big Five Personality Scores (Z scores):"), ln=True)
+for trait, z in zip(trait_names, z_scores):
+    pdf.cell(200, 10, txt=safe_text(f"{trait}: {z:.2f}"), ln=True)
 
     pdf.ln(10)
     pdf.cell(200, 10, txt=safe_text("Recommended Careers Top-10:"), ln=True)
