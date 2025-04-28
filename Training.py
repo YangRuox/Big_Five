@@ -19,16 +19,13 @@ from fpdf import FPDF
 import time
 
 # %%
-   # 读取Excel文件
 big5_df = pd.read_excel('Job-profile.xlsx', sheet_name='Big Five Domains')
 
-# 提取五大特质特征
 features = big5_df[['Neuroticism (M)', 'Extraversion (M)', 
                     'Openness (M)', 'Agreeableness (M)', 
                     'Conscientiousness (M)']]
 job_names = big5_df['Job'].tolist()
 
-# 标准化处理
 scaler = StandardScaler()
 scaled_features = scaler.fit_transform(features)
 
@@ -65,13 +62,9 @@ class JobRecommenderMLP(nn.Module):
         return self.model(x)
 
 
-
-# 数据增强
 X_aug, y_aug = augment_data(scaled_features, noise_ratio=0.1, n_samples_per_job=1000)
 
 
-
-# 数据划分
 X_train, X_val, y_train, y_val = train_test_split(X_aug, y_aug, test_size=0.25, random_state=42)
 
 train_dataset = TensorDataset(torch.tensor(X_train, dtype=torch.float32), torch.tensor(y_train, dtype=torch.long))
@@ -80,17 +73,14 @@ val_dataset = TensorDataset(torch.tensor(X_val, dtype=torch.float32), torch.tens
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 
-# 模型定义（你已有）
 input_dim = X_aug.shape[1]
 hidden_dim = 128
 output_dim = len(job_names)
 model = JobRecommenderMLP(input_dim, hidden_dim, output_dim)
 
-# 损失函数 & 优化器
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-# 训练参数
 n_epochs = 100
 patience = 3
 best_val_loss = float('inf')
@@ -121,7 +111,6 @@ for epoch in range(n_epochs):
     train_acc = accuracy_score(train_targets, train_preds)
     train_f1 = f1_score(train_targets, train_preds, average='macro')
 
-    # 验证阶段
     model.eval()
     val_preds, val_targets = [], []
     total_val_loss = 0
@@ -140,7 +129,6 @@ for epoch in range(n_epochs):
     val_acc = accuracy_score(val_targets, val_preds)
     val_f1 = f1_score(val_targets, val_preds, average='macro')
 
-    # 保存记录
     train_loss_list.append(avg_train_loss)
     val_loss_list.append(avg_val_loss)
     train_acc_list.append(train_acc)
@@ -164,7 +152,6 @@ for epoch in range(n_epochs):
             print("Early stopping triggered.")
             break
 
-# 加载最佳模型
 model.load_state_dict(best_model_state)
 
 
@@ -221,19 +208,15 @@ similarity_matrix = cosine_similarity(scaled_features)
 def recommend_jobs(user_big5_scores, model, similarity_matrix, top_k=10):
     model.eval()
     with torch.no_grad():
-        # 标准化用户输入
         user_scaled = scaler.transform([user_big5_scores])
         user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
 
-        # MLP 输出 logits
         logits = model(user_tensor).numpy().flatten()
 
-        # 计算 similarity-aware score（逻辑输出 × 相似度）
         match_score = similarity_matrix @ logits
 
-        # 取 Top-k
         top_indices = np.argsort(match_score)[-top_k:][::-1]
-        top_jobs = [(job_codes[i], job_names[i], match_score[i]) for i in top_indices]  # 加上代码
+        top_jobs = [(job_codes[i], job_names[i], match_score[i]) for i in top_indices] 
 
         return top_jobs
 
@@ -246,30 +229,27 @@ for i, (code, job, score) in enumerate(recommendations):
 
 # %%
 
-# 假设你的模型是 model
 torch.save(model.state_dict(), "your_model.pth")
 
-# 假设你已经对特征使用了 scaler
+
 scaler = StandardScaler()
 scaler.fit(X_train)  # 这里 X_train 是你训练数据的特征
 joblib.dump(scaler, "your_scaler.pkl")
 
 
-# 假设 job_names 和 job_codes 是你拥有的职业名称和代码列表
-job_names = big5_df['Job'].tolist() # 你的职业名称列表
-job_codes = big5_df['Code'].tolist() # 你的职业代码列表
 
-# 保存为 numpy 文件
+job_names = big5_df['Job'].tolist() 
+job_codes = big5_df['Code'].tolist()
+
+
 np.save("job_names.npy", job_names)
 np.save("job_codes.npy", job_codes)
 
 
 
-# 保存标准化后的职业特征
 np.save("scaled_features.npy", scaled_features)
 
 
-# 保存相似度矩阵
 np.save("similarity_matrix.npy", similarity_matrix)
 
 
