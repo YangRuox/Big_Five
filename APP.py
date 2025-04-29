@@ -33,6 +33,30 @@ similarity_matrix = np.load("similarity_matrix.npy")
 text_dict = np.load("text_dict.npy", allow_pickle=True).item()
 language_display = np.load("language_display.npy", allow_pickle=True).item()
 
+title_translations = {
+    "en": "🧬 Your Big Five Personality Profile (T scores)",
+    "zh": "🧬 你的大五人格雷达图（T分）",
+    "es": "🧬 Tu Perfil de Personalidad Big Five (Puntajes T)",
+    "fr": "🧬 Votre profil de personnalité Big Five (scores T)",
+    "ru": "🧬 Ваш профиль личности по Big Five (T-баллы)",
+    "ar": "🧬 ملف الشخصية الخاص بك (Big Five) بدرجات T",
+}
+trait_names = {
+    "en": ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"],
+    "zh": ["神经质", "外向性", "开放性", "宜人性", "尽责性"],
+    "es": ["Neuroticismo", "Extraversión", "Apertura", "Amabilidad", "Conciencia"],
+    "fr": ["Névrosisme", "Extraversion", "Ouverture", "Amabilité", "Conscienciosité"],
+    "ru": ["Невротизм", "Экстраверсия", "Открытость", "Доброжелательность", "Сознательность"],
+    "ar": ["الضيق العصبي", "الانفتاح", "الانبساطية", "التعاطف", "الضمير المهني"]
+}
+
+job_en = jobs
+job_ar = np.load("job_ar.npy", allow_pickle=True).item()
+job_fr = np.load("job_fr.npy", allow_pickle=True).item()
+job_es = np.load("job_es.npy", allow_pickle=True).item()
+job_ru = np.load("job_ru.npy", allow_pickle=True).item()
+job_zh = np.load("job_zh.npy", allow_pickle=True).item()
+
 
 # %%
 class JobRecommenderMLP(nn.Module):
@@ -83,9 +107,6 @@ def load_data():
     return mean_norms, sd_norms, questions, weights
 
 mean_norms, sd_norms, questions, weights = load_data()
-
-text_dict = np.load("text_dict.npy", allow_pickle=True).item()
-language_display = np.load("language_display.npy", allow_pickle=True).item()
 
 language_options = list(language_display.values())
 
@@ -161,10 +182,56 @@ if submitted:
 
 
     scaled_input = scaler.transform([T_scores])
+    
+    if selected_language_code == 'en':
+        trait_names_local = trait_names["en"]
+        job_names_local = job_en
+        title = "🧬 Your Big Five Personality Profile (T scores)"
+        top_subheader = selected_text[7]
+        bottom_subheader = selected_text[8]
 
-    trait_names = ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]
+    elif selected_language_code == 'fr':
+        trait_names_local = trait_names["fr"]
+        job_names_local = job_fr
+        title = "🧬 Votre profil de personnalité Big Five (scores T)"
+        top_subheader = selected_text[7]
+        bottom_subheader = selected_text[8]
+
+    elif selected_language_code == 'es':
+        trait_names_local = trait_names["es"]
+        job_names_local = job_es
+        title = "🧬 Tu Perfil de Personalidad Big Five (Puntajes T)"
+        top_subheader = selected_text[7]
+        bottom_subheader = selected_text[8]
+
+    elif selected_language_code == 'zh':
+        trait_names_local = trait_names["zh"]
+        job_names_local = job_zh
+        title = "🧬 你的大五人格雷达图（T分）"
+        top_subheader = selected_text[7]
+        bottom_subheader = selected_text[8]
+
+    elif selected_language_code == 'ru':
+        trait_names_local = trait_names["ru"]
+        job_names_local = job_ru
+        title = "🧬 Ваш профиль личности по Big Five (T-баллы)"
+        top_subheader = selected_text[7]
+        bottom_subheader = selected_text[8]
+
+    elif selected_language_code == 'ar':
+        trait_names_local = trait_names["ar"]
+        job_names_local = job_ar
+        title = "🧬 ملف الشخصية الخاص بك (Big Five) بدرجات T"
+        top_subheader = selected_text[7]
+        bottom_subheader = selected_text[8]
+
+
+
+
+
+    
     radar_values = list(T_scores) + [T_scores[0]]
-    radar_labels = trait_names + [trait_names[0]]
+    radar_labels = trait_names_local + [trait_names_local[0]]
 
     fig = go.Figure()
     fig.add_trace(go.Scatterpolar(
@@ -180,7 +247,7 @@ if submitted:
             radialaxis=dict(visible=True, range=[-100, 100], tickfont=dict(size=10)),
         ),
         showlegend=False,
-        title="🧬 Your Big Five Personality Profile (T scores)"
+        title=title_translations[selected_language_code]
     )
 
     st.plotly_chart(fig)
@@ -193,12 +260,30 @@ if submitted:
         bottom_indices = np.argsort(scores)[:10]
 
         st.subheader(selected_text[7])
-        for rank, idx in enumerate(top_indices, 1):
-            st.write(f"NO.{rank} - {job_names[idx]}")
+        if selected_language_code == 'en':
+            job_display = job_en
+        elif selected_language_code == 'zh':
+            job_display = job_zh
+        elif selected_language_code == 'fr':
+            job_display = job_fr
+        elif selected_language_code == 'es':
+            job_display = job_es
+        elif selected_language_code == 'ru':
+            job_display = job_ru
+        elif selected_language_code == 'ar':
+            job_display = job_ar
+        else:
+            job_display = job_en 
 
-        st.subheader(selected_text[8])
+        for rank, idx in enumerate(top_indices, 1):
+            st.write(f"NO.{rank} - {job_display[idx]}")
+        st.subheader(selected_text[8])  
+        
         for rank, idx in enumerate(bottom_indices, 1):
-            st.write(f"NO.{rank} - {job_names[idx]}")
+            st.write(f"NO.{rank} - {job_display[idx]}")
+        st.subheader(selected_text[8])
+        
+
 
     def safe_text(text):
         return str(text).replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"').replace("–", "-").replace("—", "-")
@@ -215,23 +300,23 @@ if submitted:
 
     pdf.ln(10)
     pdf.cell(200, 10, txt=safe_text("Big Five Personality Scores (T scores):"), ln=True)
-    for trait, score in zip(trait_names, T_scores):
+    for trait, score in zip(trait_names_local, T_scores):
         pdf.cell(200, 10, txt=safe_text(f"{trait}: {score:.2f}"), ln=True)
 
     pdf.ln(10)
     pdf.cell(200, 10, txt=safe_text("Big Five Personality Scores (Z scores):"), ln=True)
-    for trait, z in zip(trait_names, Z):
+    for trait, z in zip(trait_names_local, Z):
         pdf.cell(200, 10, txt=safe_text(f"{trait}: {z:.2f}"), ln=True)
 
     pdf.ln(10)
     pdf.cell(200, 10, txt=safe_text("Recommended Careers Top-10:"), ln=True)
     for rank, idx in enumerate(top_indices, 1):
-        pdf.cell(200, 10, txt=safe_text(f"{rank}. {job_names[idx]}"), ln=True)
+        pdf.cell(200, 10, txt=safe_text(f"{rank}. {job_display[idx]}"), ln=True)
 
     pdf.ln(10)
     pdf.cell(200, 10, txt=safe_text("Least Recommended Careers Bottom-10:"), ln=True)
     for rank, idx in enumerate(bottom_indices, 1):
-        pdf.cell(200, 10, txt=safe_text(f"{rank}. {job_names[idx]}"), ln=True)
+        pdf.cell(200, 10, txt=safe_text(f"{rank}. {job_display[idx]}"), ln=True)
 
     pdf_output = "BigFive_Test_Result.pdf"
     pdf.output(pdf_output)
