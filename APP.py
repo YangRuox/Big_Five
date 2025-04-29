@@ -292,9 +292,12 @@ if submitted:
         
         for rank, idx in enumerate(bottom_indices, 1):
             st.write(f"NO.{rank} - {job_display[idx]}")
+
+        st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+
             
-        st.markdown(f"**Disclaimer:** {disclaimer_text[selected_language_code]}")
-        
+        st.markdown(f"<h3 style='color:red; font-weight:bold;'>NOTE</h3><p>{disclaimer_text[selected_language_code]}</p>",unsafe_allow_html=True)
+
         
 
 
