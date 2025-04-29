@@ -50,6 +50,15 @@ trait_names = {
     "ar": ["الضيق العصبي", "الانفتاح", "الانبساطية", "التعاطف", "الضمير المهني"]
 }
 
+disclaimer_text = {
+    "en": "The career recommendations provided here are for your reference only. It's important to consider your personal circumstances, preferences, and goals when making a career decision. We encourage you to explore different options and take the time to evaluate each one carefully. May you find a fulfilling and rewarding career that aligns with your values and aspirations. Best of luck on your journey to success! 😊",
+    "zh": "这里提供的职业推荐仅供参考。在做出职业选择时，请务必考虑您的个人情况、兴趣和目标。我们鼓励您探索不同的职业选项，并仔细评估每一个选择。希望您能够找到一个符合自己价值观和人生目标的理想职业，祝您在职业生涯中取得圆满成功！😊",
+    "es": "Las recomendaciones de carrera proporcionadas aquí son solo para su referencia. Es importante tener en cuenta sus circunstancias personales, preferencias y objetivos al tomar una decisión sobre su carrera. Le animamos a explorar diferentes opciones y tomarse el tiempo necesario para evaluar cada una de ellas con cuidado. ¡Le deseamos mucho éxito en su camino hacia una carrera gratificante y satisfactoria! 😊",
+    "fr": "Les recommandations de carrière fournies ici sont uniquement à titre de référence. Il est important de prendre en compte vos circonstances personnelles, vos préférences et vos objectifs lorsque vous prenez une décision concernant votre carrière. Nous vous encourageons à explorer différentes options et à prendre le temps d'évaluer chaque choix avec soin. Nous vous souhaitons de trouver une carrière épanouissante et gratifiante qui corresponde à vos valeurs et aspirations. Bonne chance dans votre parcours vers le succès ! 😊",
+    "ru": "Предоставленные рекомендации по карьере предназначены только для вашего ознакомления. Важно учитывать ваши личные обстоятельства, предпочтения и цели при принятии решения о карьере. Мы призываем вас исследовать различные варианты и уделять достаточно времени на тщательную оценку каждого из них. Желаем вам найти карьеру, которая будет соответствовать вашим ценностям и устремлениям, и успешного пути к успеху! 😊",
+    "ar": "التوصيات المهنية المقدمة هنا هي للإشارة فقط. من المهم أن تأخذ في اعتبارك ظروفك الشخصية واهتماماتك وأهدافك عند اتخاذ قرار بشأن مهنتك. نشجعك على استكشاف خيارات مختلفة وأخذ الوقت الكافي لتقييم كل خيار بعناية. نتمنى لك التوفيق في إيجاد مهنة مجزية ومرضية تتناسب مع قيمك وطموحاتك. نتمنى لك كل النجاح في مسيرتك المهنية! 😊"
+}
+
 traits =  ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]
 
 job_en = np.load("job_en.npy", allow_pickle=True)
@@ -283,6 +292,8 @@ if submitted:
         
         for rank, idx in enumerate(bottom_indices, 1):
             st.write(f"NO.{rank} - {job_display[idx]}")
+            
+        st.markdown(f"**Disclaimer:** {disclaimer_text[selected_language_code]}")
         
         
 
