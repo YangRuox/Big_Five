@@ -283,7 +283,7 @@ if submitted:
         
         for rank, idx in enumerate(bottom_indices, 1):
             st.write(f"NO.{rank} - {job_display[idx]}")
-        st.subheader(selected_text[8])
+        
         
 
 
