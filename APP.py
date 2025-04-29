@@ -51,11 +51,11 @@ trait_names = {
 }
 
 job_en = jobs
-job_ar = np.load("job_ar.npy", allow_pickle=True).item()
-job_fr = np.load("job_fr.npy", allow_pickle=True).item()
-job_es = np.load("job_es.npy", allow_pickle=True).item()
-job_ru = np.load("job_ru.npy", allow_pickle=True).item()
-job_zh = np.load("job_zh.npy", allow_pickle=True).item()
+job_ar = np.load("job_ar.npy", allow_pickle=True)
+job_fr = np.load("job_fr.npy", allow_pickle=True)
+job_es = np.load("job_es.npy", allow_pickle=True)
+job_ru = np.load("job_ru.npy", allow_pickle=True)
+job_zh = np.load("job_zh.npy", allow_pickle=True)
 
 
 # %%
