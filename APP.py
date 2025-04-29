@@ -52,7 +52,7 @@ trait_names = {
 
 traits =  ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]
 
-job_en = jobs
+job_en = np.load("job_en.npy", allow_pickle=True)
 job_ar = np.load("job_ar.npy", allow_pickle=True)
 job_fr = np.load("job_fr.npy", allow_pickle=True)
 job_es = np.load("job_es.npy", allow_pickle=True)
