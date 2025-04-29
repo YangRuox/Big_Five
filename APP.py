@@ -290,7 +290,8 @@ if submitted:
 
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", size=12)
+    pdf.add_font('DejaVu', '', 'path_to_DejaVuSans.ttf', uni=True)
+    pdf.set_font('DejaVu', '', 12)
 
     pdf.cell(200, 10, txt=safe_text("Big Five Personality Test Results"), ln=True, align='C')
 
