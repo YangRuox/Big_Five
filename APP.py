@@ -50,6 +50,8 @@ trait_names = {
     "ar": ["الضيق العصبي", "الانفتاح", "الانبساطية", "التعاطف", "الضمير المهني"]
 }
 
+traits =  ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]
+
 job_en = jobs
 job_ar = np.load("job_ar.npy", allow_pickle=True)
 job_fr = np.load("job_fr.npy", allow_pickle=True)
@@ -290,8 +292,7 @@ if submitted:
 
     pdf = FPDF()
     pdf.add_page()
-    pdf.add_font('DejaVu', '', 'path_to_DejaVuSans.ttf', uni=True)
-    pdf.set_font('DejaVu', '', 12)
+    pdf.set_font("Arial", size=12)
 
     pdf.cell(200, 10, txt=safe_text("Big Five Personality Test Results"), ln=True, align='C')
 
@@ -301,29 +302,29 @@ if submitted:
 
     pdf.ln(10)
     pdf.cell(200, 10, txt=safe_text("Big Five Personality Scores (T scores):"), ln=True)
-    for trait, score in zip(trait_names_local, T_scores):
+    for trait, score in zip(traits, T_scores):
         pdf.cell(200, 10, txt=safe_text(f"{trait}: {score:.2f}"), ln=True)
 
     pdf.ln(10)
     pdf.cell(200, 10, txt=safe_text("Big Five Personality Scores (Z scores):"), ln=True)
-    for trait, z in zip(trait_names_local, Z):
+    for trait, z in zip(traits, Z):
         pdf.cell(200, 10, txt=safe_text(f"{trait}: {z:.2f}"), ln=True)
 
     pdf.ln(10)
     pdf.cell(200, 10, txt=safe_text("Recommended Careers Top-10:"), ln=True)
     for rank, idx in enumerate(top_indices, 1):
-        pdf.cell(200, 10, txt=safe_text(f"{rank}. {job_display[idx]}"), ln=True)
+        pdf.cell(200, 10, txt=safe_text(f"{rank}. {job_names[idx]}"), ln=True)
 
     pdf.ln(10)
     pdf.cell(200, 10, txt=safe_text("Least Recommended Careers Bottom-10:"), ln=True)
     for rank, idx in enumerate(bottom_indices, 1):
-        pdf.cell(200, 10, txt=safe_text(f"{rank}. {job_display[idx]}"), ln=True)
+        pdf.cell(200, 10, txt=safe_text(f"{rank}. {job_names[idx]}"), ln=True)
 
     pdf_output = "BigFive_Test_Result.pdf"
     pdf.output(pdf_output)
 
     with open(pdf_output, "rb") as f:
-        st.download_button("Download Your PDF Report", f, file_name=pdf_output)
+        st.download_button("Download Your PDF Report(English)", f, file_name=pdf_output)
 
 
 
