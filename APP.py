@@ -17,6 +17,7 @@ import joblib
 import plotly.graph_objects as go
 from fpdf import FPDF
 import time
+from sklearn.decomposition import PCA
 from sentence_transformers import SentenceTransformer
 
 
@@ -70,6 +71,26 @@ ideal_job_prompt = {
     "ar": "يرجى إدخال مهنتك المثالية (مثال: عالم بيانات):"
 }
 
+ideal_job_warning = {
+    "en": "⚠️ Please enter your ideal career.",
+    "zh": "⚠️ 请输入您的理想职业。",
+    "es": "⚠️ Por favor, introduzca su carrera ideal.",
+    "fr": "⚠️ Veuillez saisir votre métier idéal.",
+    "ru": "⚠️ Пожалуйста, введите вашу идеальную профессию.",
+    "ar": "⚠️ يرجى إدخال مهنتك المثالية."
+}
+
+ideal_job_result_text = {
+    "en": "The career closest to your ideal is: **{}**",
+    "zh": "您的理想职业最相近的是：**{}**",
+    "es": "La carrera más cercana a su ideal es: **{}**",
+    "fr": "Le métier le plus proche de votre idéal est : **{}**",
+    "ru": "Самая близкая к вашей идеальной профессия: **{}**",
+    "ar": "أقرب مهنة إلى مهنتك المثالية هي: **{}**"
+}
+
+
+
 
 traits =  ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]
 
@@ -79,6 +100,43 @@ job_fr = np.load("job_fr.npy", allow_pickle=True)
 job_es = np.load("job_es.npy", allow_pickle=True)
 job_ru = np.load("job_ru.npy", allow_pickle=True)
 job_zh = np.load("job_zh.npy", allow_pickle=True)
+
+job_dict = {
+    "en": np.load("job_en.npy", allow_pickle=True),
+    "zh": np.load("job_zh.npy", allow_pickle=True),
+    "es": np.load("job_es.npy", allow_pickle=True),
+    "fr": np.load("job_fr.npy", allow_pickle=True),
+    "ru": np.load("job_ru.npy", allow_pickle=True),
+    "ar": np.load("job_ar.npy", allow_pickle=True)
+}
+closest_text = {
+    "en": "Closest Big Five trait:",
+    "zh": "最接近的五大特质是：",
+    "es": "El rasgo de los Cinco Grandes más cercano es:",
+    "fr": "Le trait des Big Five le plus proche est :",
+    "ru": "Ближайшая черта Большой пятёрки:",
+    "ar": "أقرب سمة من السمات الخمسة الكبرى هي:"
+}
+
+closest_text = {
+    "en": "Closest Big Five trait:",
+    "zh": "最接近的五大特质是：",
+    "es": "El rasgo de los Cinco Grandes más cercano es:",
+    "fr": "Le trait des Big Five le plus proche est :",
+    "ru": "Ближайшая черта Большой пятёрки:",
+    "ar": "أقرب سمة من السمات الخمسة الكبرى هي:"
+}
+furthest_text = {
+    "en": "Furthest Big Five trait:",
+    "zh": "最远的五大特质是：",
+    "es": "El rasgo de los Cinco Grandes más alejado es:",
+    "fr": "Le trait des Big Five le plus éloigné est :",
+    "ru": "Самая удалённая черта Большой пятёрки:",
+    "ar": "أبعد سمة من السمات الخمسة الكبرى هي:"
+}
+
+st.write(f"{closest_text[selected_language_code]} **{trait_list[closest_idx]}**，差异为：{diffs[closest_idx]:.2f}")
+st.write(f"{furthest_text[selected_language_code]} **{trait_list[furthest_idx]}**，差异为：{diffs[furthest_idx]:.2f}")
 
 
 # %%
@@ -118,6 +176,7 @@ model = JobRecommenderMLP(input_dim=5, hidden_dim=128, output_dim=len(job_names)
 model.load_state_dict(torch.load("your_model.pth"))
 model.eval()
 
+model_embedding = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
 
 
 # %%
@@ -167,7 +226,35 @@ with st.form("bfi_form"):
     st.subheader(selected_text[5])  
 
     ideal_job_input = st.text_input(ideal_job_prompt[selected_language_code], key="ideal_job")
+    if st.session_state.get("ideal_job"):
+        ideal_job_text = st.session_state["ideal_job"]
+        ideal_job_vector = model_embedding.encode(ideal_job_text, convert_to_tensor=True, normalize_embeddings=True)
+    else:
+        st.warning(ideal_job_warning[selected_language_code])
 
+    user_input_job = ideal_job_input
+    language_code = selected_language_code
+
+    if user_input_job:
+    user_embedding = model_embedding.encode([user_input_job], convert_to_tensor=True)
+
+    job_list = job_dict[language_code]
+    job_embeddings = model_embedding.encode(job_list.tolist(), convert_to_tensor=True)
+
+    similarities = cosine_similarity(user_embedding.cpu().numpy(), job_embeddings.cpu().numpy())[0]
+
+
+    best_match_index = np.argmax(similarities)
+    best_match_job = job_list[best_match_index]
+
+
+    ideal_big5_score = big5_df.iloc[best_match_index][["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]].values
+
+
+    st.markdown(ideal_job_result_text[selected_language_code].format(best_match_job))
+
+
+    
 
     response_dict = {}
     for i, q in enumerate(selected_questions):
@@ -209,6 +296,13 @@ if submitted:
 
     big5_scores = np.dot(Z, weights.values)
     T_scores = 10 * big5_scores + 50
+
+    diffs = np.abs(T_scores - ideal_big5_score)
+    closest_idx = np.argmin(diffs)
+    furthest_idx = np.argmax(diffs)
+
+    st.write(f"{closest_text[selected_language_code]} **{trait_list[closest_idx]}**")
+    st.write(f"{furthest_text[selected_language_code]} **{trait_list[furthest_idx]}**")
 
 
     scaled_input = scaler.transform([T_scores])
