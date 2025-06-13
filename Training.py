@@ -205,27 +205,114 @@ similarity_matrix = cosine_similarity(scaled_features)
 # similarity_matrix.shape = (263, 263)
 
 
-def recommend_jobs(user_big5_scores, model, similarity_matrix, top_k=10):
-    model.eval()
-    with torch.no_grad():
-        user_scaled = scaler.transform([user_big5_scores])
-        user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
 
+def compute_pca_weights(features):
+    pca = PCA(n_components=features.shape[1])
+    pca.fit(features)
+    weights = pca.explained_variance_ratio_
+    return weights
+
+def compute_weighted_euclidean_similarity(user_big5, job_features, weights):
+    user_df = pd.DataFrame([user_big5], columns=features.columns)
+    user_scaled = scaler.transform(user_df)[0]
+    diffs = job_features - user_scaled
+    weighted_dists = np.sqrt(np.sum(weights * (diffs ** 2), axis=1))
+
+    # 归一化距离为相似度（距离越小相似度越高）
+    dist_min, dist_max = weighted_dists.min(), weighted_dists.max()
+    normalized = (weighted_dists - dist_min) / (dist_max - dist_min + 1e-10)
+    similarities = 1 - normalized
+    return similarities
+
+def recommend_jobs_weighted_euclidean(user_big5_scores, model, job_features, weights, top_k=10):
+    # 加权欧几里得距离相似度
+    similarities = compute_weighted_euclidean_similarity(user_big5_scores, job_features, weights)
+
+    # MLP 输出 logits
+    user_df = pd.DataFrame([user_big5_scores], columns=features.columns)
+    user_scaled = scaler.transform(user_df)
+    user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
+    with torch.no_grad():
         logits = model(user_tensor).numpy().flatten()
 
-        match_score = similarity_matrix @ logits
+    match_scores = similarities * logits
+    top_indices = np.argsort(match_scores)[-top_k:][::-1]
+    top_jobs = [(job_codes[i], job_names[i], match_scores[i]) for i in top_indices]
+    return top_jobs
 
-        top_indices = np.argsort(match_score)[-top_k:][::-1]
-        top_jobs = [(job_codes[i], job_names[i], match_score[i]) for i in top_indices] 
 
-        return top_jobs
+original_features = big5_df[['Neuroticism (M)', 'Extraversion (M)', 
+                             'Openness (M)', 'Agreeableness (M)', 
+                             'Conscientiousness (M)']].values
+
+pca_weights = compute_pca_weights(original_features)
 
 user_input = [51.46,	51.17,	46.09,	52.15,	49.41]
 
-recommendations = recommend_jobs(user_input, model, similarity_matrix, top_k=10)
+
+recommendations = recommend_jobs_weighted_euclidean(user_input, model, scaled_features, pca_weights, top_k=10)
 
 for i, (code, job, score) in enumerate(recommendations):
-    print(f"{i+1}. {code} - {job} (score: {score:.2f})")
+    print(f"{i+1}. {code} - {job} (score: {score:.4f})")
+
+
+
+def evaluate_precision_recall_f1(model, X_val, y_val, job_features, weights, top_k=10):
+    total_precision = 0
+    total_recall = 0
+    total_f1 = 0
+    num_users = len(X_val)
+
+    for i in range(num_users):
+        user_input = scaler.inverse_transform([X_val[i]])[0]  # 还原为原始人格
+        true_label = y_val[i]
+
+        recommendations = recommend_jobs_weighted_euclidean(
+            user_input, model, job_features, weights, top_k=top_k
+        )
+        recommended_indices = [job_codes.index(code) for code, _, _ in recommendations]
+
+        # 判断 TP, FP, FN
+        if true_label in recommended_indices:
+            TP = 1
+            FP = top_k - 1
+            FN = 0
+        else:
+            TP = 0
+            FP = top_k
+            FN = 1
+
+        precision = TP / (TP + FP)
+        recall = TP / (TP + FN) if (TP + FN) > 0 else 0
+        f1 = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+
+        total_precision += precision
+        total_recall += recall
+        total_f1 += f1
+
+    avg_precision = total_precision / num_users
+    avg_recall = total_recall / num_users
+    avg_f1 = total_f1 / num_users
+
+    print(f"Precision@{top_k}: {avg_precision:.4f}")
+    print(f"Recall@{top_k}: {avg_recall:.4f}")
+    print(f"F1-score@{top_k}: {avg_f1:.4f}")
+
+    return avg_precision, avg_recall, avg_f1
+
+
+
+evaluate_precision_recall_f1(
+    model=model,
+    X_val=X_val,
+    y_val=y_val,
+    job_features=scaled_features,
+    weights=pca_weights,  
+    top_k=10
+)
+
+
+
 
 # %%
 
