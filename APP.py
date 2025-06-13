@@ -17,18 +17,28 @@ import joblib
 import plotly.graph_objects as go
 from fpdf import FPDF
 import time
+from sklearn.decomposition import PCA
+from sentence_transformers import SentenceTransformer
+
 
 
 # %%
 big5_df = pd.read_excel('Job-profile.xlsx', sheet_name='Big Five Domains')
+features = big5_df[['Neuroticism (M)', 'Extraversion (M)', 
+                    'Openness (M)', 'Agreeableness (M)', 
+                    'Conscientiousness (M)']]
 
 # %%
 job_names = np.load("job_names.npy", allow_pickle=True)
 job_codes = np.load("job_codes.npy", allow_pickle=True)
 jobs = np.load("jobs.npy", allow_pickle=True)
 
+pca_weights = np.load("pca_weights.npy")
+scaled_features = np.load("scaled_job_features.npy")
+
+
 scaler = joblib.load("your_scaler.pkl")  
-similarity_matrix = np.load("similarity_matrix.npy")
+
 
 text_dict = np.load("text_dict.npy", allow_pickle=True).item()
 language_display = np.load("language_display.npy", allow_pickle=True).item()
@@ -59,7 +69,45 @@ disclaimer_text = {
     "ar": "التوصيات المهنية المقدمة هنا هي للإشارة فقط. من المهم أن تأخذ في اعتبارك ظروفك الشخصية واهتماماتك وأهدافك عند اتخاذ قرار بشأن مهنتك. نشجعك على استكشاف خيارات مختلفة وأخذ الوقت الكافي لتقييم كل خيار بعناية. نتمنى لك التوفيق في إيجاد مهنة مجزية ومرضية تتناسب مع قيمك وطموحاتك. نتمنى لك كل النجاح في مسيرتك المهنية! 😊"
 }
 
+ideal_job_prompt = {
+    "en": "Please enter your ideal career (e.g., Data Scientist):",
+    "zh": "请输入您的理想职业（例如：数据科学家）：",
+    "es": "Por favor, introduzca su carrera ideal (por ejemplo: Científico de datos):",
+    "fr": "Veuillez saisir votre métier idéal (par exemple : Data Scientist) :",
+    "ru": "Пожалуйста, введите вашу идеальную профессию (например: специалист по данным):",
+    "ar": "يرجى إدخال مهنتك المثالية (مثال: عالم بيانات):"
+}
+
+ideal_job_warning = {
+    "en": "⚠️ Please enter your ideal career.",
+    "zh": "⚠️ 请输入您的理想职业。",
+    "es": "⚠️ Por favor, introduzca su carrera ideal.",
+    "fr": "⚠️ Veuillez saisir votre métier idéal.",
+    "ru": "⚠️ Пожалуйста, введите вашу идеальную профессию.",
+    "ar": "⚠️ يرجى إدخال مهنتك المثالية."
+}
+
+ideal_job_result_text = {
+    "en": "The career closest to your ideal is: **{}**",
+    "zh": "您的理想职业最相近的是：**{}**",
+    "es": "La carrera más cercana a su ideal es: **{}**",
+    "fr": "Le métier le plus proche de votre idéal est : **{}**",
+    "ru": "Самая близкая к вашей идеальной профессия: **{}**",
+    "ar": "أقرب مهنة إلى مهنتك المثالية هي: **{}**"
+}
+
+
+
+
 traits =  ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]
+trait_list = {
+    "en": ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"],
+    "zh": ["神经质", "外向性", "开放性", "宜人性", "尽责性"],
+    "es": ["Neuroticismo", "Extraversión", "Apertura", "Amabilidad", "Responsabilidad"],
+    "fr": ["Névrosisme", "Extraversion", "Ouverture", "Agréabilité", "Conscience"],
+    "ru": ["Невротизм", "Экстраверсия", "Открытость", "Доброжелательность", "Добросовестность"],
+    "ar": ["العُصابية", "الانبساطية", "الانفتاح", "القبول", "الضمير الحي"]
+}
 
 job_en = np.load("job_en.npy", allow_pickle=True)
 job_ar = np.load("job_ar.npy", allow_pickle=True)
@@ -67,6 +115,43 @@ job_fr = np.load("job_fr.npy", allow_pickle=True)
 job_es = np.load("job_es.npy", allow_pickle=True)
 job_ru = np.load("job_ru.npy", allow_pickle=True)
 job_zh = np.load("job_zh.npy", allow_pickle=True)
+
+job_dict = {
+    "en": np.load("job_en.npy", allow_pickle=True),
+    "zh": np.load("job_zh.npy", allow_pickle=True),
+    "es": np.load("job_es.npy", allow_pickle=True),
+    "fr": np.load("job_fr.npy", allow_pickle=True),
+    "ru": np.load("job_ru.npy", allow_pickle=True),
+    "ar": np.load("job_ar.npy", allow_pickle=True)
+}
+closest_text = {
+    "en": "Closest Big Five trait:",
+    "zh": "最接近的五大特质是：",
+    "es": "El rasgo de los Cinco Grandes más cercano es:",
+    "fr": "Le trait des Big Five le plus proche est :",
+    "ru": "Ближайшая черта Большой пятёрки:",
+    "ar": "أقرب سمة من السمات الخمسة الكبرى هي:"
+}
+
+closest_text = {
+    "en": "Closest Big Five trait:",
+    "zh": "最接近的五大特质是：",
+    "es": "El rasgo de los Cinco Grandes más cercano es:",
+    "fr": "Le trait des Big Five le plus proche est :",
+    "ru": "Ближайшая черта Большой пятёрки:",
+    "ar": "أقرب سمة من السمات الخمسة الكبرى هي:"
+}
+furthest_text = {
+    "en": "Furthest Big Five trait:",
+    "zh": "最远的五大特质是：",
+    "es": "El rasgo de los Cinco Grandes más alejado es:",
+    "fr": "Le trait des Big Five le plus éloigné est :",
+    "ru": "Самая удалённая черта Большой пятёрки:",
+    "ar": "أبعد سمة من السمات الخمسة الكبرى هي:"
+}
+
+st.write(f"{closest_text[selected_language_code]} **{trait_list[closest_idx]}**，差异为：{diffs[closest_idx]:.2f}")
+st.write(f"{furthest_text[selected_language_code]} **{trait_list[furthest_idx]}**，差异为：{diffs[furthest_idx]:.2f}")
 
 
 # %%
@@ -81,22 +166,33 @@ class JobRecommenderMLP(nn.Module):
     
     def forward(self, x):
         return self.model(x)
+        
+def compute_weighted_euclidean_similarity(user_big5, job_features, weights):
+    user_df = pd.DataFrame([user_big5], columns=features.columns)
+    user_scaled = scaler.transform(user_df)[0]
+    diffs = job_features - user_scaled
+    weighted_dists = np.sqrt(np.sum(weights * (diffs ** 2), axis=1))
 
+    dist_min, dist_max = weighted_dists.min(), weighted_dists.max()
+    normalized = (weighted_dists - dist_min) / (dist_max - dist_min + 1e-10)
+    similarities = 1 - normalized
+    return similarities
 
-def recommend_jobs(user_big5_scores, model, similarity_matrix, top_k=10):
-    model.eval()
+def recommend_jobs_weighted_euclidean(user_big5_scores, model, job_features, weights, top_k=10):
+    similarities = compute_weighted_euclidean_similarity(user_big5_scores, job_features, weights)
+
+    user_df = pd.DataFrame([user_big5_scores], columns=features.columns)
+    user_scaled = scaler.transform(user_df)
+    user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
     with torch.no_grad():
-        user_scaled = scaler.transform([user_big5_scores])
-        user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
-
         logits = model(user_tensor).numpy().flatten()
 
-        match_score = similarity_matrix @ logits
+    match_scores = similarities * logits
+    top_indices = np.argsort(match_scores)[-top_k:][::-1]
+    top_jobs = [(job_codes[i], job_names[i], match_scores[i]) for i in top_indices]
+    return top_jobs
 
-        top_indices = np.argsort(match_score)[-top_k:][::-1]
-        top_jobs = [(job_codes[i], job_names[i], match_score[i]) for i in top_indices]  
 
-        return top_jobs
 
 # %%
 
@@ -106,6 +202,7 @@ model = JobRecommenderMLP(input_dim=5, hidden_dim=128, output_dim=len(job_names)
 model.load_state_dict(torch.load("your_model.pth"))
 model.eval()
 
+model_embedding = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
 
 
 # %%
@@ -131,6 +228,7 @@ selected_language_code = [key for key, value in language_display.items() if valu
 selected_questions = questions[selected_language_code]
 selected_text = text_dict[selected_language_code]
 
+
 with st.form("bfi_form"):
     st.title(selected_text[0])  
     st.markdown(selected_text[1]) 
@@ -138,9 +236,12 @@ with st.form("bfi_form"):
     gender = st.selectbox(selected_text[2], ["Female", "Male"])
     age = st.number_input(selected_text[3], min_value=18, max_value=70, value=25)
     
+    
     if age < 18 or age > 70:
         st.warning(selected_text[4]) 
         st.stop()  
+
+    
 
     if "age" not in st.session_state:
         st.session_state.age = 25 
@@ -149,6 +250,37 @@ with st.form("bfi_form"):
         st.session_state.gender = "Female" 
     
     st.subheader(selected_text[5])  
+
+    ideal_job_input = st.text_input(ideal_job_prompt[selected_language_code], key="ideal_job")
+    if st.session_state.get("ideal_job"):
+        ideal_job_text = st.session_state["ideal_job"]
+        ideal_job_vector = model_embedding.encode(ideal_job_text, convert_to_tensor=True, normalize_embeddings=True)
+    else:
+        st.warning(ideal_job_warning[selected_language_code])
+
+    user_input_job = ideal_job_input
+    language_code = selected_language_code
+
+    if user_input_job:
+    user_embedding = model_embedding.encode([user_input_job], convert_to_tensor=True)
+
+    job_list = job_dict[language_code]
+    job_embeddings = model_embedding.encode(job_list.tolist(), convert_to_tensor=True)
+
+    similarities = cosine_similarity(user_embedding.cpu().numpy(), job_embeddings.cpu().numpy())[0]
+
+
+    best_match_index = np.argmax(similarities)
+    best_match_job = job_list[best_match_index]
+
+
+    ideal_big5_score = big5_df.iloc[best_match_index][["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]].values
+
+
+    st.markdown(ideal_job_result_text[language_code].format(best_match_job))
+
+
+    
 
     response_dict = {}
     for i, q in enumerate(selected_questions):
@@ -191,8 +323,17 @@ if submitted:
     big5_scores = np.dot(Z, weights.values)
     T_scores = 10 * big5_scores + 50
 
+    diffs = np.abs(T_scores - ideal_big5_score)
+    closest_idx = np.argmin(diffs)
+    furthest_idx = np.argmax(diffs)
+
+    st.write(f"{closest_text[language_code]} **{trait_list[language_code][closest_idx]}**")
+    st.write(f"{furthest_text[language_code]} **{trait_list[language_code][furthest_idx]}**")
+
 
     scaled_input = scaler.transform([T_scores])
+
+    user_big5_input = T_scores
     
     if selected_language_code == 'en':
         trait_names_local = trait_names["en"]
@@ -264,11 +405,17 @@ if submitted:
     st.plotly_chart(fig)
 
     with torch.no_grad():
-        input_tensor = torch.tensor(scaled_input, dtype=torch.float32)
-        logits = model(input_tensor).numpy().flatten()
-        scores = similarity_matrix @ logits
-        top_indices = np.argsort(scores)[-10:][::-1]
-        bottom_indices = np.argsort(scores)[:10]
+        user_df = pd.DataFrame([user_big5_input], columns=features.columns)
+        user_scaled = scaler.transform(user_df)
+        user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
+        logits = model(user_tensor).numpy().flatten()
+        similarities = compute_weighted_euclidean_similarity(user_big5_input, scaled_features, pca_weights)
+        
+        all_scores = similarities * logits
+        top_indices = np.argsort(all_scores)[-10:][::-1]
+        bottom_indices = np.argsort(all_scores)[:10]
+        
+
 
         st.subheader(selected_text[7])
         if selected_language_code == 'en':
