@@ -17,6 +17,7 @@ import joblib
 import plotly.graph_objects as go
 from fpdf import FPDF
 import time
+from sklearn.decomposition import PCA
 
 # %%
 big5_df = pd.read_excel('Job-profile.xlsx', sheet_name='Big Five Domains')
