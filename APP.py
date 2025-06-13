@@ -17,6 +17,8 @@ import joblib
 import plotly.graph_objects as go
 from fpdf import FPDF
 import time
+from sentence_transformers import SentenceTransformer
+
 
 
 # %%
@@ -58,6 +60,16 @@ disclaimer_text = {
     "ru": "Предоставленные рекомендации по карьере предназначены только для вашего ознакомления. Важно учитывать ваши личные обстоятельства, предпочтения и цели при принятии решения о карьере. Мы призываем вас исследовать различные варианты и уделять достаточно времени на тщательную оценку каждого из них. Желаем вам найти карьеру, которая будет соответствовать вашим ценностям и устремлениям, и успешного пути к успеху! 😊",
     "ar": "التوصيات المهنية المقدمة هنا هي للإشارة فقط. من المهم أن تأخذ في اعتبارك ظروفك الشخصية واهتماماتك وأهدافك عند اتخاذ قرار بشأن مهنتك. نشجعك على استكشاف خيارات مختلفة وأخذ الوقت الكافي لتقييم كل خيار بعناية. نتمنى لك التوفيق في إيجاد مهنة مجزية ومرضية تتناسب مع قيمك وطموحاتك. نتمنى لك كل النجاح في مسيرتك المهنية! 😊"
 }
+
+ideal_job_prompt = {
+    "en": "Please enter your ideal career (e.g., Data Scientist):",
+    "zh": "请输入您的理想职业（例如：数据科学家）：",
+    "es": "Por favor, introduzca su carrera ideal (por ejemplo: Científico de datos):",
+    "fr": "Veuillez saisir votre métier idéal (par exemple : Data Scientist) :",
+    "ru": "Пожалуйста, введите вашу идеальную профессию (например: специалист по данным):",
+    "ar": "يرجى إدخال مهنتك المثالية (مثال: عالم بيانات):"
+}
+
 
 traits =  ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]
 
@@ -131,6 +143,7 @@ selected_language_code = [key for key, value in language_display.items() if valu
 selected_questions = questions[selected_language_code]
 selected_text = text_dict[selected_language_code]
 
+
 with st.form("bfi_form"):
     st.title(selected_text[0])  
     st.markdown(selected_text[1]) 
@@ -138,9 +151,12 @@ with st.form("bfi_form"):
     gender = st.selectbox(selected_text[2], ["Female", "Male"])
     age = st.number_input(selected_text[3], min_value=18, max_value=70, value=25)
     
+    
     if age < 18 or age > 70:
         st.warning(selected_text[4]) 
         st.stop()  
+
+    
 
     if "age" not in st.session_state:
         st.session_state.age = 25 
@@ -149,6 +165,9 @@ with st.form("bfi_form"):
         st.session_state.gender = "Female" 
     
     st.subheader(selected_text[5])  
+
+    ideal_job_input = st.text_input(ideal_job_prompt[selected_language_code], key="ideal_job")
+
 
     response_dict = {}
     for i, q in enumerate(selected_questions):
