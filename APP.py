@@ -24,14 +24,21 @@ from sentence_transformers import SentenceTransformer
 
 # %%
 big5_df = pd.read_excel('Job-profile.xlsx', sheet_name='Big Five Domains')
+features = big5_df[['Neuroticism (M)', 'Extraversion (M)', 
+                    'Openness (M)', 'Agreeableness (M)', 
+                    'Conscientiousness (M)']]
 
 # %%
 job_names = np.load("job_names.npy", allow_pickle=True)
 job_codes = np.load("job_codes.npy", allow_pickle=True)
 jobs = np.load("jobs.npy", allow_pickle=True)
 
+pca_weights = np.load("pca_weights.npy")
+scaled_features = np.load("scaled_job_features.npy")
+
+
 scaler = joblib.load("your_scaler.pkl")  
-similarity_matrix = np.load("similarity_matrix.npy")
+
 
 text_dict = np.load("text_dict.npy", allow_pickle=True).item()
 language_display = np.load("language_display.npy", allow_pickle=True).item()
@@ -93,6 +100,14 @@ ideal_job_result_text = {
 
 
 traits =  ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]
+trait_list = {
+    "en": ["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"],
+    "zh": ["神经质", "外向性", "开放性", "宜人性", "尽责性"],
+    "es": ["Neuroticismo", "Extraversión", "Apertura", "Amabilidad", "Responsabilidad"],
+    "fr": ["Névrosisme", "Extraversion", "Ouverture", "Agréabilité", "Conscience"],
+    "ru": ["Невротизм", "Экстраверсия", "Открытость", "Доброжелательность", "Добросовестность"],
+    "ar": ["العُصابية", "الانبساطية", "الانفتاح", "القبول", "الضمير الحي"]
+}
 
 job_en = np.load("job_en.npy", allow_pickle=True)
 job_ar = np.load("job_ar.npy", allow_pickle=True)
@@ -151,22 +166,33 @@ class JobRecommenderMLP(nn.Module):
     
     def forward(self, x):
         return self.model(x)
+        
+def compute_weighted_euclidean_similarity(user_big5, job_features, weights):
+    user_df = pd.DataFrame([user_big5], columns=features.columns)
+    user_scaled = scaler.transform(user_df)[0]
+    diffs = job_features - user_scaled
+    weighted_dists = np.sqrt(np.sum(weights * (diffs ** 2), axis=1))
 
+    dist_min, dist_max = weighted_dists.min(), weighted_dists.max()
+    normalized = (weighted_dists - dist_min) / (dist_max - dist_min + 1e-10)
+    similarities = 1 - normalized
+    return similarities
 
-def recommend_jobs(user_big5_scores, model, similarity_matrix, top_k=10):
-    model.eval()
+def recommend_jobs_weighted_euclidean(user_big5_scores, model, job_features, weights, top_k=10):
+    similarities = compute_weighted_euclidean_similarity(user_big5_scores, job_features, weights)
+
+    user_df = pd.DataFrame([user_big5_scores], columns=features.columns)
+    user_scaled = scaler.transform(user_df)
+    user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
     with torch.no_grad():
-        user_scaled = scaler.transform([user_big5_scores])
-        user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
-
         logits = model(user_tensor).numpy().flatten()
 
-        match_score = similarity_matrix @ logits
+    match_scores = similarities * logits
+    top_indices = np.argsort(match_scores)[-top_k:][::-1]
+    top_jobs = [(job_codes[i], job_names[i], match_scores[i]) for i in top_indices]
+    return top_jobs
 
-        top_indices = np.argsort(match_score)[-top_k:][::-1]
-        top_jobs = [(job_codes[i], job_names[i], match_score[i]) for i in top_indices]  
 
-        return top_jobs
 
 # %%
 
@@ -251,7 +277,7 @@ with st.form("bfi_form"):
     ideal_big5_score = big5_df.iloc[best_match_index][["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]].values
 
 
-    st.markdown(ideal_job_result_text[selected_language_code].format(best_match_job))
+    st.markdown(ideal_job_result_text[language_code].format(best_match_job))
 
 
     
@@ -301,11 +327,13 @@ if submitted:
     closest_idx = np.argmin(diffs)
     furthest_idx = np.argmax(diffs)
 
-    st.write(f"{closest_text[selected_language_code]} **{trait_list[closest_idx]}**")
-    st.write(f"{furthest_text[selected_language_code]} **{trait_list[furthest_idx]}**")
+    st.write(f"{closest_text[language_code]} **{trait_list[language_code][closest_idx]}**")
+    st.write(f"{furthest_text[language_code]} **{trait_list[language_code][furthest_idx]}**")
 
 
     scaled_input = scaler.transform([T_scores])
+
+    user_big5_input = T_scores
     
     if selected_language_code == 'en':
         trait_names_local = trait_names["en"]
@@ -377,11 +405,17 @@ if submitted:
     st.plotly_chart(fig)
 
     with torch.no_grad():
-        input_tensor = torch.tensor(scaled_input, dtype=torch.float32)
-        logits = model(input_tensor).numpy().flatten()
-        scores = similarity_matrix @ logits
-        top_indices = np.argsort(scores)[-10:][::-1]
-        bottom_indices = np.argsort(scores)[:10]
+        user_df = pd.DataFrame([user_big5_input], columns=features.columns)
+        user_scaled = scaler.transform(user_df)
+        user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
+        logits = model(user_tensor).numpy().flatten()
+        similarities = compute_weighted_euclidean_similarity(user_big5_input, scaled_features, pca_weights)
+        
+        all_scores = similarities * logits
+        top_indices = np.argsort(all_scores)[-10:][::-1]
+        bottom_indices = np.argsort(all_scores)[:10]
+        
+
 
         st.subheader(selected_text[7])
         if selected_language_code == 'en':
