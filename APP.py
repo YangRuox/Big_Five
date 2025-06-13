@@ -150,9 +150,6 @@ furthest_text = {
     "ar": "أبعد سمة من السمات الخمسة الكبرى هي:"
 }
 
-st.write(f"{closest_text[selected_language_code]} **{trait_list[closest_idx]}**，差异为：{diffs[closest_idx]:.2f}")
-st.write(f"{furthest_text[selected_language_code]} **{trait_list[furthest_idx]}**，差异为：{diffs[furthest_idx]:.2f}")
-
 
 # %%
 class JobRecommenderMLP(nn.Module):
