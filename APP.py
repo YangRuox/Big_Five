@@ -424,7 +424,11 @@ if submitted:
     st.plotly_chart(fig)
 
     with torch.no_grad():
-        user_df = pd.DataFrame([user_big5_input], columns=features.columns)
+        user_df = pd.DataFrame([user_big5_input], columns=[
+    'Neuroticism (M)', 'Extraversion (M)', 
+    'Openness (M)', 'Agreeableness (M)', 
+    'Conscientiousness (M)'
+])
         user_scaled = scaler.transform(user_df)
         user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
         logits = model(user_tensor).numpy().flatten()
