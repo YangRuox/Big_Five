@@ -68,7 +68,14 @@ disclaimer_text = {
     "ru": "Предоставленные рекомендации по карьере предназначены только для вашего ознакомления. Важно учитывать ваши личные обстоятельства, предпочтения и цели при принятии решения о карьере. Мы призываем вас исследовать различные варианты и уделять достаточно времени на тщательную оценку каждого из них. Желаем вам найти карьеру, которая будет соответствовать вашим ценностям и устремлениям, и успешного пути к успеху! 😊",
     "ar": "التوصيات المهنية المقدمة هنا هي للإشارة فقط. من المهم أن تأخذ في اعتبارك ظروفك الشخصية واهتماماتك وأهدافك عند اتخاذ قرار بشأن مهنتك. نشجعك على استكشاف خيارات مختلفة وأخذ الوقت الكافي لتقييم كل خيار بعناية. نتمنى لك التوفيق في إيجاد مهنة مجزية ومرضية تتناسب مع قيمك وطموحاتك. نتمنى لك كل النجاح في مسيرتك المهنية! 😊"
 }
-
+job_display = {
+    "en": np.load("job_en.npy", allow_pickle=True),
+    "zh": np.load("job_zh.npy", allow_pickle=True),
+    "es": np.load("job_es.npy", allow_pickle=True),
+    "fr": np.load("job_fr.npy", allow_pickle=True), 
+    "ru": np.load("job_ru.npy", allow_pickle=True),
+    "ar": np.load("job_ar.npy", allow_pickle=True)
+}
 ideal_job_prompt = {
     "en": "Please enter your ideal career (e.g., Data Scientist):",
     "zh": "请输入您的理想职业（例如：数据科学家）：",
@@ -332,7 +339,7 @@ if submitted:
     user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
   
     with torch.no_grad():
-        
+        current_job_display = job_display[selected_language_code]
         logits = model(user_tensor).numpy().flatten()
 
         similarities = compute_weighted_euclidean_similarity(T_scores, scaled_features, pca_weights)
@@ -342,11 +349,11 @@ if submitted:
         bottom_indices = np.argsort(all_scores)[:10]
         st.subheader(selected_text[7]) 
         for rank, idx in enumerate(top_indices, 1):
-            st.write(f"NO.{rank} - {job_display[idx]}")
+            st.write(f"NO.{rank} - {current_job_display[idx]}")
 
         st.subheader(selected_text[8])  
         for rank, idx in enumerate(bottom_indices, 1):
-            st.write(f"NO.{rank} - {job_display[idx]}")
+            st.write(f"NO.{rank} - {current_job_display[idx]}")
 
 
     
