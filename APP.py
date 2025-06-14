@@ -127,21 +127,21 @@ job_dict = {
 
 
 closest_text = {
-    "en": "Big Five trait that best matches you:",
-    "zh": "五大特征中与您较吻合的特征是：",
-    "es": "Rasgo de los Cinco Grandes que más se ajusta a ti:",
-    "fr": "Trait des Big Five qui vous correspond le mieux :",
-    "ru": "Черта Большой пятёрки, которая вам наиболее соответствует:",
-    "ar": "السمة من السمات الخمس الكبرى التي تناسبك أكثر هي:"
+    "en": "Your trait closest to the ideal career:",
+    "zh": "与理想职业特征最接近的是：", 
+    "es": "Tu rasgo más cercano al trabajo ideal:",
+    "fr": "Votre trait le plus proche du métier idéal :",
+    "ru": "Ваша черта, наиболее близкая к идеальной профессии:",
+    "ar": "سمتك الأقرب إلى المهنة المثالية:"
 }
 
 furthest_text = {
-    "en": "Big Five trait that least matches you:",
-    "zh": "五大特征中与您差异较大的特征是：",
-    "es": "Rasgo de los Cinco Grandes que menos se ajusta a ti:",
-    "fr": "Trait des Big Five qui vous correspond le moins :",
-    "ru": "Черта Большой пятёрки, которая вам наименее соответствует:",
-    "ar": "السمة من السمات الخمس الكبرى التي تناسبك أقل هي:"
+    "en": "Your trait furthest from the ideal career:",
+    "zh": "与理想职业特征差距最大的是：",
+    "es": "Tu rasgo más alejado del trabajo ideal:",
+    "fr": "Votre trait le plus éloigné du métier idéal :", 
+    "ru": "Ваша черта, наиболее далёкая от идеальной профессии:",
+    "ar": "سمتك الأبعد عن المهنة المثالية:"
 }
 
 
