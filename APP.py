@@ -124,30 +124,24 @@ job_dict = {
     "ru": np.load("job_ru.npy", allow_pickle=True),
     "ar": np.load("job_ar.npy", allow_pickle=True)
 }
-closest_text = {
-    "en": "Closest Big Five trait:",
-    "zh": "最接近的五大特质是：",
-    "es": "El rasgo de los Cinco Grandes más cercano es:",
-    "fr": "Le trait des Big Five le plus proche est :",
-    "ru": "Ближайшая черта Большой пятёрки:",
-    "ar": "أقرب سمة من السمات الخمسة الكبرى هي:"
-}
+
 
 closest_text = {
-    "en": "Closest Big Five trait:",
-    "zh": "最接近的五大特质是：",
-    "es": "El rasgo de los Cinco Grandes más cercano es:",
-    "fr": "Le trait des Big Five le plus proche est :",
-    "ru": "Ближайшая черта Большой пятёрки:",
-    "ar": "أقرب سمة من السمات الخمسة الكبرى هي:"
+    "en": "Big Five trait that best matches you:",
+    "zh": "五大特征中与您较吻合的特征是：",
+    "es": "Rasgo de los Cinco Grandes que más se ajusta a ti:",
+    "fr": "Trait des Big Five qui vous correspond le mieux :",
+    "ru": "Черта Большой пятёрки, которая вам наиболее соответствует:",
+    "ar": "السمة من السمات الخمس الكبرى التي تناسبك أكثر هي:"
 }
+
 furthest_text = {
-    "en": "Furthest Big Five trait:",
-    "zh": "最远的五大特质是：",
-    "es": "El rasgo de los Cinco Grandes más alejado es:",
-    "fr": "Le trait des Big Five le plus éloigné est :",
-    "ru": "Самая удалённая черта Большой пятёрки:",
-    "ar": "أبعد سمة من السمات الخمسة الكبرى هي:"
+    "en": "Big Five trait that least matches you:",
+    "zh": "五大特征中与您差异较大的特征是：",
+    "es": "Rasgo de los Cinco Grandes que menos se ajusta a ti:",
+    "fr": "Trait des Big Five qui vous correspond le moins :",
+    "ru": "Черта Большой пятёрки, которая вам наименее соответствует:",
+    "ar": "السمة من السمات الخمس الكبرى التي تناسبك أقل هي:"
 }
 
 
@@ -440,7 +434,7 @@ if submitted:
         
 
 
-        st.subheader(selected_text[7])
+        
         if selected_language_code == 'en':
             job_display = job_en
         elif selected_language_code == 'zh':
@@ -456,6 +450,7 @@ if submitted:
         else:
             job_display = job_en 
 
+        st.subheader(selected_text[7])
         for rank, idx in enumerate(top_indices, 1):
             st.write(f"NO.{rank} - {job_display[idx]}")
         st.subheader(selected_text[8])  
