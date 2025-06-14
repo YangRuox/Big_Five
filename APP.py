@@ -265,7 +265,11 @@ with st.form("bfi_form"):
        similarities = cosine_similarity(user_embedding.cpu().numpy(), job_embeddings.cpu().numpy())[0]
        best_match_index = np.argmax(similarities)
        best_match_job = job_list[best_match_index]
-       ideal_big5_score = big5_df.iloc[best_match_index][["Neuroticism", "Extraversion", "Openness", "Agreeableness", "Conscientiousness"]].values
+       ideal_big5_score = big5_df.iloc[best_match_index][[
+       'Neuroticism (M)', 'Extraversion (M)', 
+       'Openness (M)', 'Agreeableness (M)', 
+       'Conscientiousness (M)'
+   ]].values
        st.markdown(ideal_job_result_text[language_code].format(best_match_job))
 
 
@@ -281,11 +285,11 @@ with st.form("bfi_form"):
             key=key
         )
 
-    if all(v is not None for v in response_dict.values()):
-        submitted = st.form_submit_button(selected_text[9])
-    else:
-        submitted = False
-        st.warning(selected_text[6])  
+    submitted = st.form_submit_button(selected_text[9])
+    if submitted:
+       if not all(v is not None for v in response_dict.values()):
+           st.warning(selected_text[6])
+           st.stop()  
       
  
 
