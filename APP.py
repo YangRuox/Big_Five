@@ -286,9 +286,35 @@ with st.form("bfi_form"):
     else:
         submitted = False
         st.warning(selected_text[6])  
+      
+ 
+
+
 
 # %%
 if submitted:
+    user_big5_input = np.array([response_dict[f"q{i}"] for i in range(len(selected_questions))])
+
+    with torch.no_grad():
+        user_df = pd.DataFrame([user_big5_input], columns=features.columns)
+        user_scaled = scaler.transform(user_df)
+        user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
+        logits = model(user_tensor).numpy().flatten()
+
+        similarities = compute_weighted_euclidean_similarity(user_big5_input, scaled_features, pca_weights)
+        all_scores = similarities * logits
+
+        top_indices = np.argsort(all_scores)[-10:][::-1]
+        bottom_indices = np.argsort(all_scores)[:10]
+        st.subheader(selected_text[7]) 
+        for rank, idx in enumerate(top_indices, 1):
+            st.write(f"NO.{rank} - {job_display[idx]}")
+
+        st.subheader(selected_text[8])  
+        for rank, idx in enumerate(bottom_indices, 1):
+            st.write(f"NO.{rank} - {job_display[idx]}")
+
+  
     st.session_state.age = age
     st.session_state.gender = gender
 
@@ -403,6 +429,7 @@ if submitted:
         all_scores = similarities * logits
         top_indices = np.argsort(all_scores)[-10:][::-1]
         bottom_indices = np.argsort(all_scores)[:10]
+    
         
 
 
