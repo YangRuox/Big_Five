@@ -347,13 +347,7 @@ if submitted:
 
         top_indices = np.argsort(all_scores)[-10:][::-1]
         bottom_indices = np.argsort(all_scores)[:10]
-        st.subheader(selected_text[7]) 
-        for rank, idx in enumerate(top_indices, 1):
-            st.write(f"NO.{rank} - {current_job_display[idx]}")
 
-        st.subheader(selected_text[8])  
-        for rank, idx in enumerate(bottom_indices, 1):
-            st.write(f"NO.{rank} - {current_job_display[idx]}")
 
 
     
