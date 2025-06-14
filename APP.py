@@ -297,28 +297,6 @@ with st.form("bfi_form"):
 
 # %%
 if submitted:
-    user_big5_input = np.array([response_dict[f"q{i}"] for i in range(len(selected_questions))])
-
-    with torch.no_grad():
-        user_df = pd.DataFrame([user_big5_input], columns=features.columns)
-        user_scaled = scaler.transform(user_df)
-        user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
-        logits = model(user_tensor).numpy().flatten()
-
-        similarities = compute_weighted_euclidean_similarity(user_big5_input, scaled_features, pca_weights)
-        all_scores = similarities * logits
-
-        top_indices = np.argsort(all_scores)[-10:][::-1]
-        bottom_indices = np.argsort(all_scores)[:10]
-        st.subheader(selected_text[7]) 
-        for rank, idx in enumerate(top_indices, 1):
-            st.write(f"NO.{rank} - {job_display[idx]}")
-
-        st.subheader(selected_text[8])  
-        for rank, idx in enumerate(bottom_indices, 1):
-            st.write(f"NO.{rank} - {job_display[idx]}")
-
-  
     st.session_state.age = age
     st.session_state.gender = gender
 
@@ -336,11 +314,16 @@ if submitted:
     sigma = sd_norms[sd_norms['group'] == normgroup].iloc[0, 1:].values
 
     responses = np.array([response_dict[f"q{i}"] for i in range(len(questions))])
-
     Z = (responses - mu) / sigma
 
     big5_scores = np.dot(Z, weights.values)
     T_scores = 10 * big5_scores + 50
+    
+    user_df = pd.DataFrame([T_scores], columns=[
+    'Neuroticism (M)', 'Extraversion (M)', 
+    'Openness (M)', 'Agreeableness (M)', 
+    'Conscientiousness (M)'
+])
 
     diffs = np.abs(T_scores - ideal_big5_score)
     closest_idx = np.argmin(diffs)
@@ -350,9 +333,30 @@ if submitted:
     st.write(f"{furthest_text[language_code]} **{trait_list[language_code][furthest_idx]}**")
 
 
-    scaled_input = scaler.transform([T_scores])
 
-    user_big5_input = T_scores
+    user_scaled = scaler.transform(user_df)
+    user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
+  
+    with torch.no_grad():
+        
+        logits = model(user_tensor).numpy().flatten()
+
+        similarities = compute_weighted_euclidean_similarity(T_scores, scaled_features, pca_weights)
+        all_scores = similarities * logits
+
+        top_indices = np.argsort(all_scores)[-10:][::-1]
+        bottom_indices = np.argsort(all_scores)[:10]
+        st.subheader(selected_text[7]) 
+        for rank, idx in enumerate(top_indices, 1):
+            st.write(f"NO.{rank} - {job_display[idx]}")
+
+        st.subheader(selected_text[8])  
+        for rank, idx in enumerate(bottom_indices, 1):
+            st.write(f"NO.{rank} - {job_display[idx]}")
+
+
+    
+    
     
     if selected_language_code == 'en':
         trait_names_local = trait_names["en"]
@@ -424,15 +428,10 @@ if submitted:
     st.plotly_chart(fig)
 
     with torch.no_grad():
-        user_df = pd.DataFrame([user_big5_input], columns=[
-    'Neuroticism (M)', 'Extraversion (M)', 
-    'Openness (M)', 'Agreeableness (M)', 
-    'Conscientiousness (M)'
-])
         user_scaled = scaler.transform(user_df)
         user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
         logits = model(user_tensor).numpy().flatten()
-        similarities = compute_weighted_euclidean_similarity(user_big5_input, scaled_features, pca_weights)
+        similarities = compute_weighted_euclidean_similarity(T_scores, scaled_features, pca_weights)
         
         all_scores = similarities * logits
         top_indices = np.argsort(all_scores)[-10:][::-1]
