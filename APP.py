@@ -201,8 +201,11 @@ model.load_state_dict(torch.load("your_model.pth", map_location=device))
 
 model.eval()
 
-model_embedding = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
-
+model_embedding = SentenceTransformer(
+    'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2',
+    device=None  
+)
+model_embedding.to('cpu')  
 
 # %%
 @st.cache_data
