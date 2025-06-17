@@ -9,7 +9,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
+
 from sklearn.metrics.pairwise import cosine_similarity
 from joblib import load
 import streamlit as st
@@ -155,46 +155,6 @@ for epoch in range(n_epochs):
 
 model.load_state_dict(best_model_state)
 
-
-
-
-
-
-
-
-
-
-# %%
-# Loss
-plt.figure(figsize=(12,4))
-plt.subplot(1,3,1)
-plt.plot(train_loss_list, label='Train Loss')
-plt.plot(val_loss_list, label='Val Loss')
-plt.title("Loss Curve")
-plt.xlabel("Epoch")
-plt.ylabel("Loss")
-plt.legend()
-
-# Accuracy
-plt.subplot(1,3,2)
-plt.plot(train_acc_list, label='Train Acc')
-plt.plot(val_acc_list, label='Val Acc')
-plt.title("Accuracy Curve")
-plt.xlabel("Epoch")
-plt.ylabel("Accuracy")
-plt.legend()
-
-# F1
-plt.subplot(1,3,3)
-plt.plot(train_f1_list, label='Train F1')
-plt.plot(val_f1_list, label='Val F1')
-plt.title("F1 Score Curve")
-plt.xlabel("Epoch")
-plt.ylabel("F1 Score")
-plt.legend()
-
-plt.tight_layout()
-plt.show()
 
 
 # %%
