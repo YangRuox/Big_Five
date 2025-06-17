@@ -179,17 +179,14 @@ def compute_weighted_euclidean_similarity(user_big5, job_features, weights):
     diffs = job_features - user_scaled
     weighted_dists = np.sqrt(np.sum(weights * (diffs ** 2), axis=1))
 
-    # 归一化距离为相似度（距离越小相似度越高）
     dist_min, dist_max = weighted_dists.min(), weighted_dists.max()
     normalized = (weighted_dists - dist_min) / (dist_max - dist_min + 1e-10)
     similarities = 1 - normalized
     return similarities
 
 def recommend_jobs_weighted_euclidean(user_big5_scores, model, job_features, weights, top_k=10):
-    # 加权欧几里得距离相似度
     similarities = compute_weighted_euclidean_similarity(user_big5_scores, job_features, weights)
 
-    # MLP 输出 logits
     user_df = pd.DataFrame([user_big5_scores], columns=features.columns)
     user_scaled = scaler.transform(user_df)
     user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
@@ -233,7 +230,6 @@ def evaluate_precision_recall_f1(model, X_val, y_val, job_features, weights, top
         )
         recommended_indices = [job_codes.index(code) for code, _, _ in recommendations]
 
-        # 判断 TP, FP, FN
         if true_label in recommended_indices:
             TP = 1
             FP = top_k - 1
