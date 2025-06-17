@@ -9,7 +9,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
 from collections import defaultdict
 from joblib import load
 import streamlit as st
