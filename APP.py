@@ -329,6 +329,8 @@ if submitted:
     closest_idx = np.argmin(diffs)
     furthest_idx = np.argmax(diffs)
 
+    st.markdown(ideal_job_result_text[language_code].format(best_match_job))
+
     st.write(f"{closest_text[language_code]} **{trait_list[language_code][closest_idx]}**")
     st.write(f"{furthest_text[language_code]} **{trait_list[language_code][furthest_idx]}**")
 
