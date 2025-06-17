@@ -198,15 +198,10 @@ def recommend_jobs_weighted_euclidean(user_big5_scores, model, job_features, wei
 device = torch.device('cpu') 
 model = JobRecommenderMLP(input_dim=5, hidden_dim=128, output_dim=len(job_names))
 model.load_state_dict(torch.load("your_model.pth", map_location=device))
-
+model.to(device)
 model.eval()
 
-model_embedding = SentenceTransformer(
-    'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2',
-    device=None  
-)
-model_embedding.to('cpu')  
-
+model_embedding = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
 # %%
 @st.cache_data
 def load_data():
