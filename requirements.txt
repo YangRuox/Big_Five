@@ -9,5 +9,5 @@ fpdf2
 openpyxl
 transformers>=4.30.0
 sentence-transformers>=2.2.2
-torch==2.3.0+cpu
+torch>=2.3.0
 -f https://download.pytorch.org/whl/torch_stable.html
