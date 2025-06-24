@@ -283,15 +283,10 @@ if submitted:
   
     job_list = job_dict[language_code]
     job_embeddings = model_embedding.encode(job_list.tolist(), convert_to_tensor=True)
-    def to_numpy(tensor):
-        if hasattr(tensor, "cpu"):  
-            return tensor.cpu().detach().to(torch.float32).numpy()
-        elif hasattr(tensor, "numpy"): 
-            return tensor.numpy()
-        return np.array(tensor)  
+
     
-    user_np = model_embedding.encode([user_input_job], convert_to_numpy=True)
-    job_np = model_embedding.encode(job_list.tolist(), convert_to_numpy=True)
+    user_np = user_embedding.cpu().detach().numpy()
+    job_np = job_embeddings.cpu().detach().numpy()
   
     similarities = cosine_similarity(user_np, job_np)[0]
     best_match_index = np.argmax(similarities)
