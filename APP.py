@@ -390,7 +390,7 @@ if submitted:
         fill='toself',
         name='Your Big Five T Scores',
         line=dict(color='royalblue')
-    )
+    ))
 
     fig.update_layout(
         polar=dict(
