@@ -280,9 +280,20 @@ if submitted:
     user_input_job = ideal_job_input
     language_code = selected_language_code
     user_embedding = model_embedding.encode([user_input_job], convert_to_tensor=True)
+  
     job_list = job_dict[language_code]
     job_embeddings = model_embedding.encode(job_list.tolist(), convert_to_tensor=True)
-    similarities = cosine_similarity(user_embedding.cpu().numpy(), job_embeddings.cpu().numpy())[0]
+    def to_numpy(tensor):
+        if hasattr(tensor, "cpu"):  
+            return tensor.cpu().detach().numpy()
+        elif hasattr(tensor, "numpy"): 
+            return tensor.numpy()
+        return np.array(tensor)  
+    
+    user_np = to_numpy(user_embedding)
+    job_np = to_numpy(job_embeddings)
+  
+    similarities = cosine_similarity(user_np, job_np)[0]
     best_match_index = np.argmax(similarities)
     best_match_job = job_list[best_match_index]
     ideal_big5_score = big5_df.iloc[best_match_index][[
