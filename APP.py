@@ -341,6 +341,7 @@ if submitted:
     with torch.no_grad():
         current_job_display = job_display[selected_language_code]
         logits = model(user_tensor).numpy().flatten()
+        logits = (logits - logits.min()) / (logits.max() - logits.min() + 1e-9)
 
         similarities = compute_weighted_euclidean_similarity(T_scores, scaled_features, pca_weights)
         all_scores = similarities * logits
