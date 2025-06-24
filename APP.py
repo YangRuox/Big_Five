@@ -249,32 +249,7 @@ with st.form("bfi_form"):
     st.subheader(selected_text[5])  
 
     ideal_job_input = st.text_input(ideal_job_prompt[selected_language_code], key="ideal_job")
-    if st.session_state.get("ideal_job"):
-        ideal_job_text = st.session_state["ideal_job"]
-        ideal_job_vector = model_embedding.encode(ideal_job_text, convert_to_tensor=True, normalize_embeddings=True)
-    else:
-        st.warning(ideal_job_warning[selected_language_code])
-
-    user_input_job = ideal_job_input
-    language_code = selected_language_code
-
-    if user_input_job:
-       user_embedding = model_embedding.encode([user_input_job], convert_to_tensor=True)
-       job_list = job_dict[language_code]
-       job_embeddings = model_embedding.encode(job_list.tolist(), convert_to_tensor=True)
-       similarities = cosine_similarity(user_embedding.cpu().numpy(), job_embeddings.cpu().numpy())[0]
-       best_match_index = np.argmax(similarities)
-       best_match_job = job_list[best_match_index]
-       ideal_big5_score = big5_df.iloc[best_match_index][[
-       'Neuroticism (M)', 'Extraversion (M)', 
-       'Openness (M)', 'Agreeableness (M)', 
-       'Conscientiousness (M)'
-   ]].values
-       st.markdown(ideal_job_result_text[language_code].format(best_match_job))
-
-
-    
-
+   
     response_dict = {}
     for i, q in enumerate(selected_questions):
         key = f"q{i}"
@@ -286,6 +261,7 @@ with st.form("bfi_form"):
         )
 
     submitted = st.form_submit_button(selected_text[9])
+  
     if submitted:
        if not all(v is not None for v in response_dict.values()):
            st.warning(selected_text[6])
@@ -297,6 +273,26 @@ with st.form("bfi_form"):
 
 # %%
 if submitted:
+   if not ideal_job_input:
+       st.warning(ideal_job_warning[selected_language_code])
+       st.stop()
+
+   user_input_job = ideal_job_input
+   language_code = selected_language_code
+   user_embedding = model_embedding.encode([user_input_job], convert_to_tensor=True)
+   job_list = job_dict[language_code]
+   job_embeddings = model_embedding.encode(job_list.tolist(), convert_to_tensor=True)
+   similarities = cosine_similarity(user_embedding.cpu().numpy(), job_embeddings.cpu().numpy())[0]
+   best_match_index = np.argmax(similarities)
+   best_match_job = job_list[best_match_index]
+   ideal_big5_score = big5_df.iloc[best_match_index][[
+        'Neuroticism (M)', 'Extraversion (M)', 
+        'Openness (M)', 'Agreeableness (M)', 
+        'Conscientiousness (M)'
+    ]].values
+
+    st.markdown(ideal_job_result_text[language_code].format(best_match_job))
+ 
     st.session_state.age = age
     st.session_state.gender = gender
 
