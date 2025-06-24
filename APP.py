@@ -273,9 +273,9 @@ with st.form("bfi_form"):
 
 # %%
 if submitted:
-   if not ideal_job_input:
-       st.warning(ideal_job_warning[selected_language_code])
-       st.stop()
+    if not ideal_job_input:
+        st.warning(ideal_job_warning[selected_language_code])
+        st.stop()
 
     user_input_job = ideal_job_input
     language_code = selected_language_code
@@ -289,7 +289,7 @@ if submitted:
         'Neuroticism (M)', 'Extraversion (M)', 
         'Openness (M)', 'Agreeableness (M)', 
         'Conscientiousness (M)'
-     ]].values
+    ]].values
 
     st.markdown(ideal_job_result_text[language_code].format(best_match_job))
  
@@ -316,10 +316,10 @@ if submitted:
     T_scores = 10 * big5_scores + 50
     
     user_df = pd.DataFrame([T_scores], columns=[
-    'Neuroticism (M)', 'Extraversion (M)', 
-    'Openness (M)', 'Agreeableness (M)', 
-    'Conscientiousness (M)'
-])
+        'Neuroticism (M)', 'Extraversion (M)', 
+        'Openness (M)', 'Agreeableness (M)', 
+        'Conscientiousness (M)'
+    ])
 
     diffs = np.abs(T_scores - ideal_big5_score)
     closest_idx = np.argmin(diffs)
@@ -328,8 +328,6 @@ if submitted:
     st.markdown(ideal_job_result_text[language_code].format(best_match_job))
     st.write(f"{closest_text[language_code]} **{trait_list[language_code][closest_idx]}**")
     st.write(f"{furthest_text[language_code]} **{trait_list[language_code][furthest_idx]}**")
-
-
 
     user_scaled = scaler.transform(user_df)
     user_tensor = torch.tensor(user_scaled, dtype=torch.float32)
@@ -345,46 +343,36 @@ if submitted:
         top_indices = np.argsort(all_scores)[-10:][::-1]
         bottom_indices = np.argsort(all_scores)[:10]
 
-
-
-    
-    
-    
     if selected_language_code == 'en':
         trait_names_local = trait_names["en"]
         job_names_local = job_en
         title = "🧬 Your Big Five Personality Profile (T scores)"
         top_subheader = selected_text[7]
         bottom_subheader = selected_text[8]
-
     elif selected_language_code == 'fr':
         trait_names_local = trait_names["fr"]
         job_names_local = job_fr
         title = "🧬 Votre profil de personnalité Big Five (scores T)"
         top_subheader = selected_text[7]
         bottom_subheader = selected_text[8]
-
     elif selected_language_code == 'es':
         trait_names_local = trait_names["es"]
         job_names_local = job_es
         title = "🧬 Tu Perfil de Personalidad Big Five (Puntajes T)"
         top_subheader = selected_text[7]
         bottom_subheader = selected_text[8]
-
     elif selected_language_code == 'zh':
         trait_names_local = trait_names["zh"]
         job_names_local = job_zh
         title = "🧬 你的大五人格雷达图（T分）"
         top_subheader = selected_text[7]
         bottom_subheader = selected_text[8]
-
     elif selected_language_code == 'ru':
         trait_names_local = trait_names["ru"]
         job_names_local = job_ru
         title = "🧬 Ваш профиль личности по Big Five (T-баллы)"
         top_subheader = selected_text[7]
         bottom_subheader = selected_text[8]
-
     elif selected_language_code == 'ar':
         trait_names_local = trait_names["ar"]
         job_names_local = job_ar
@@ -392,11 +380,6 @@ if submitted:
         top_subheader = selected_text[7]
         bottom_subheader = selected_text[8]
 
-
-
-
-
-    
     radar_values = list(T_scores) + [T_scores[0]]
     radar_labels = trait_names_local + [trait_names_local[0]]
 
@@ -407,12 +390,11 @@ if submitted:
         fill='toself',
         name='Your Big Five T Scores',
         line=dict(color='royalblue')
-    ))
+    )
 
     fig.update_layout(
         polar=dict(
             radialaxis=dict(visible=True, range=[-100, 100], tickfont=dict(size=10)),
-        ),
         showlegend=False,
         title=title_translations[selected_language_code]
     )
@@ -429,10 +411,6 @@ if submitted:
         top_indices = np.argsort(all_scores)[-10:][::-1]
         bottom_indices = np.argsort(all_scores)[:10]
     
-        
-
-
-        
         if selected_language_code == 'en':
             job_display = job_en
         elif selected_language_code == 'zh':
@@ -457,12 +435,8 @@ if submitted:
             st.write(f"NO.{rank} - {job_display[idx]}")
 
         st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-
             
         st.markdown(f"<h3 style='color:red; font-weight:bold;'>NOTE</h3><p>{disclaimer_text[selected_language_code]}</p>",unsafe_allow_html=True)
-
-        
-
 
     def safe_text(text):
         return str(text).replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"').replace("–", "-").replace("—", "-")
@@ -502,15 +476,6 @@ if submitted:
 
     with open(pdf_output, "rb") as f:
         st.download_button("Download Your PDF Report(English)", f, file_name=pdf_output)
-
-
-
-
-
-
-   
-
-
 
 
 
