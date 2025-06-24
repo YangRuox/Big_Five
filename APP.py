@@ -395,6 +395,7 @@ if submitted:
     fig.update_layout(
         polar=dict(
             radialaxis=dict(visible=True, range=[-100, 100], tickfont=dict(size=10)),
+        ),
         showlegend=False,
         title=title_translations[selected_language_code]
     )
