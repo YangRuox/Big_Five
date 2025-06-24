@@ -290,8 +290,8 @@ if submitted:
             return tensor.numpy()
         return np.array(tensor)  
     
-    user_np = to_numpy(user_embedding)
-    job_np = to_numpy(job_embeddings)
+    user_np = model_embedding.encode([user_input_job], convert_to_numpy=True)
+    job_np = model_embedding.encode(job_list.tolist(), convert_to_numpy=True)
   
     similarities = cosine_similarity(user_np, job_np)[0]
     best_match_index = np.argmax(similarities)
