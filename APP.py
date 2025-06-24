@@ -285,7 +285,7 @@ if submitted:
     job_embeddings = model_embedding.encode(job_list.tolist(), convert_to_tensor=True)
     def to_numpy(tensor):
         if hasattr(tensor, "cpu"):  
-            return tensor.cpu().detach().numpy()
+            return tensor.cpu().detach().to(torch.float32).numpy()
         elif hasattr(tensor, "numpy"): 
             return tensor.numpy()
         return np.array(tensor)  
